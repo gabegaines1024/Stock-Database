@@ -5,25 +5,26 @@ from pydantic import BaseModel, Field
 
 # ============== STOCK SCHEMAS ==============
 class StockBase(BaseModel):
+    """Shared fields for all stock operations."""
     ticker_symbol: str = Field(..., min_length=1, max_length=10)
     company_name: str = Field(..., min_length=1, max_length=255)
-    sector: Optional[str] = Field(None, max_length=100)  # Can be None, no default
+    sector: Optional[str] = Field(None, max_length=100)
 
 
 class StockCreate(StockBase):
-    """Inherits all fields from StockBase - nothing to add."""
+    """For creating stocks - inherits all from Base."""
     pass
 
 
 class StockUpdate(BaseModel):
-    """All fields optional for partial updates."""
+    """For partial updates - all optional, doesn't inherit from Base."""
     ticker_symbol: Optional[str] = Field(None, min_length=1, max_length=10)
     company_name: Optional[str] = Field(None, min_length=1, max_length=255)
     sector: Optional[str] = Field(None, max_length=100)
 
 
 class Stock(StockBase):
-    """API response includes id."""
+    """API response - inherits base fields + adds id."""
     id: int
     
     class Config:
@@ -32,20 +33,24 @@ class Stock(StockBase):
 
 # ============== PORTFOLIO SCHEMAS ==============
 class PortfolioBase(BaseModel):
+    """Shared fields for all portfolio operations."""
     name: str = Field(..., min_length=1, max_length=100)
     user_id: int = Field(..., gt=0)
 
 
 class PortfolioCreate(PortfolioBase):
+    """For creating portfolios - inherits all from Base."""
     pass
 
 
 class PortfolioUpdate(BaseModel):
+    """For partial updates - all optional, doesn't inherit from Base."""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     user_id: Optional[int] = Field(None, gt=0)
 
 
 class Portfolio(PortfolioBase):
+    """API response - inherits base fields + adds id and timestamp."""
     id: int
     created_at: datetime
     
@@ -55,7 +60,7 @@ class Portfolio(PortfolioBase):
 
 # ============== TRANSACTION SCHEMAS ==============
 class TransactionBase(BaseModel):
-    """Shared fields for transaction responses."""
+    """Shared fields for all transaction operations."""
     portfolio_id: int = Field(..., gt=0)
     ticker_symbol: str = Field(..., min_length=1, max_length=10)
     transaction_type: str = Field(..., pattern="^(buy|sell)$")
@@ -63,18 +68,13 @@ class TransactionBase(BaseModel):
     price: float = Field(..., gt=0)
 
 
-class TransactionCreate(BaseModel):
-    """For creating transactions - no id, no executed_at."""
-    portfolio_id: int = Field(..., gt=0)
-    ticker_symbol: str = Field(..., min_length=1, max_length=10)
-    transaction_type: str = Field(..., pattern="^(buy|sell)$")
-    quantity: float = Field(..., gt=0)
-    price: float = Field(..., gt=0)
-    # executed_at will be set by database automatically
+class TransactionCreate(TransactionBase):
+    """For creating transactions - inherits all from Base, executed_at set by DB."""
+    pass
 
 
 class TransactionUpdate(BaseModel):
-    """For partial updates - all optional."""
+    """For partial updates - all optional, doesn't inherit from Base."""
     portfolio_id: Optional[int] = Field(None, gt=0)
     ticker_symbol: Optional[str] = Field(None, min_length=1, max_length=10)
     transaction_type: Optional[str] = Field(None, pattern="^(buy|sell)$")
@@ -83,7 +83,7 @@ class TransactionUpdate(BaseModel):
 
 
 class Transaction(TransactionBase):
-    """API response includes id and timestamp."""
+    """API response - inherits base fields + adds id and timestamp."""
     id: int
     executed_at: datetime
     
