@@ -30,3 +30,19 @@ def list_transactions_route(db: Session = Depends(get_db)) -> List[Transaction]:
         return list_transactions(db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/{transaction_id}", response_model=Transaction)
+def update_transaction_route(transaction_id: int, transaction: TransactionUpdate, db: Session = Depends(get_db)) -> Transaction:
+    """Update a transaction by its primary identifier."""
+    try:
+        return update_transaction(db, transaction_id, transaction)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/{transaction_id}", response_model=Transaction)
+def delete_transaction_route(transaction_id: int, db: Session = Depends(get_db)) -> Transaction:
+    """Delete a transaction by its primary identifier."""
+    try:
+        return delete_transaction(db, transaction_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
