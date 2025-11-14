@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from collections.abc import Iterable
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
@@ -33,8 +33,8 @@ def get_stock_by_ticker(db: Session, ticker: str) -> Optional[models.Stock]:
     return db_stock
 
 
-def list_stocks(db: Session) -> Iterable[models.Stock]:
-    """Return an iterable of all stored stocks."""
+def list_stocks(db: Session) -> List[models.Stock]:
+    """Return a list of all stored stocks."""
     db_stocks = db.query(models.Stock).all()
     return db_stocks
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas import StockBase, Stock, StockUpdate
 from app.crud import create_stock, get_stock, update_stock, delete_stock, list_stocks
-
+from typing import List
 router = APIRouter(prefix="/stocks", tags=["stocks"])
 
 @router.post("/", response_model=Stock)
@@ -22,7 +22,7 @@ def get_stock_route(stock_id: int, db: Session = Depends(get_db)) -> Stock:
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/", response_model=list[Stock])
+@router.get("/", response_model=List[Stock])
 def list_stocks_route(db: Session = Depends(get_db)) -> list[Stock]:
     """List all stocks."""
     try:

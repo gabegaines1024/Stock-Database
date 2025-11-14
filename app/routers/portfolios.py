@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas import PortfolioBase, Portfolio, PortfolioUpdate
 from app.crud import create_portfolio, get_portfolio, update_portfolio, delete_portfolio, list_portfolios
+from typing import List
 
 router = APIRouter(prefix="/portfolios", tags=["portfolios"])
 
