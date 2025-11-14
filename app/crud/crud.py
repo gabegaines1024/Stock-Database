@@ -4,10 +4,11 @@ from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
-from . import models, schemas
+from app.models import models
+from app.schemas import StockCreate, StockUpdate, PortfolioCreate, PortfolioUpdate, TransactionCreate, TransactionUpdate
 
 
-def create_stock(db: Session, stock: schemas.StockCreate) -> models.Stock:
+def create_stock(db: Session, stock: StockCreate) -> models.Stock:
     """Create a new stock record in the database."""
     db_stock = models.Stock(ticker_symbol=stock.ticker_symbol, company_name=stock.company_name, sector=stock.sector)
     try:
@@ -39,7 +40,7 @@ def list_stocks(db: Session) -> List[models.Stock]:
     return db_stocks
 
 
-def update_stock(db: Session, stock_id: int, stock: schemas.StockUpdate) -> models.Stock:
+def update_stock(db: Session, stock_id: int, stock: StockUpdate) -> models.Stock:
     """Update an existing stock record."""
     db_stock = db.query(models.Stock).filter(models.Stock.id == stock_id).first()
     if not db_stock:
@@ -70,7 +71,7 @@ def delete_stock(db: Session, stock_id: int) -> None:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def create_portfolio(db: Session, portfolio: schemas.PortfolioCreate) -> models.Portfolio:
+def create_portfolio(db: Session, portfolio: PortfolioCreate) -> models.Portfolio:
     """Create a new portfolio record."""
     db_portfolio = models.Portfolio(name=portfolio.name, user_id=portfolio.user_id)
     try:
@@ -100,7 +101,7 @@ def list_portfolios(db: Session) -> Iterable[models.Portfolio]:
 def update_portfolio(
     db: Session,
     portfolio_id: int,
-    portfolio: schemas.PortfolioUpdate,
+    portfolio: PortfolioUpdate,
 ) -> models.Portfolio:
     """Update an existing portfolio record."""
     db_portfolio = db.query(models.Portfolio).filter(models.Portfolio.id == portfolio_id).first()
@@ -134,7 +135,7 @@ def delete_portfolio(db: Session, portfolio_id: int) -> None:
 
 def create_transaction(
     db: Session,
-    transaction: schemas.TransactionCreate,
+    transaction: TransactionCreate,
 ) -> models.Transaction:
     """Create a new transaction record."""
     db_transaction = models.Transaction(portfolio_id=transaction.portfolio_id, ticker_symbol=transaction.ticker_symbol, transaction_type=transaction.transaction_type, quantity=transaction.quantity, price=transaction.price)
@@ -157,7 +158,7 @@ def get_transaction(db: Session, transaction_id: int) -> Optional[models.Transac
     return db_transaction
 
 
-def list_transactions(db: Session) -> Iterable[models.Transaction]:
+def list_transactions(db: Session) -> List[models.Transaction]:
     """Return an iterable of all stored transactions."""
     db_transactions = db.query(models.Transaction).all()
     return db_transactions
@@ -166,7 +167,7 @@ def list_transactions(db: Session) -> Iterable[models.Transaction]:
 def update_transaction(
     db: Session,
     transaction_id: int,
-    transaction: schemas.TransactionUpdate,
+    transaction: TransactionUpdate,
 ) -> models.Transaction:
     """Update an existing transaction record."""
     db_transaction = db.query(models.Transaction).filter(models.Transaction.id == transaction_id).first()
