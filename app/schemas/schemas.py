@@ -89,3 +89,31 @@ class Transaction(TransactionBase):
     
     class Config:
         from_attributes = True
+
+
+# ============== USER SCHEMAS ==============
+class UserBase(BaseModel):
+    """Shared fields for all user operations."""
+    email: str = Field(..., min_length=1, max_length=255)
+    username: str = Field(..., min_length=1, max_length=255)
+
+
+class UserCreate(UserBase):
+    """For creating users - includes password field."""
+    password: str = Field(..., min_length=8, max_length=100)
+
+
+class UserUpdate(BaseModel):
+    """For partial updates - all optional, doesn't inherit from Base."""
+    email: Optional[str] = Field(None, min_length=1, max_length=255)
+    username: Optional[str] = Field(None, min_length=1, max_length=255)
+    password: Optional[str] = Field(None, min_length=8, max_length=100)
+
+
+class User(UserBase):
+    """API response - inherits base fields + adds id and timestamp."""
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
