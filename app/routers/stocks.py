@@ -6,3 +6,43 @@ from app.crud import create_stock, get_stock, update_stock, delete_stock, list_s
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
 
+@router.post("/", response_model=Stock)
+def create_stock_route(stock: StockBase, db: Session = Depends(get_db)) -> Stock:
+    """Create a new stock."""
+    try:
+        return create_stock(db, stock)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+@router.get("/{stock_id}", response_model=Stock)
+def get_stock_route(stock_id: int, db: Session = Depends(get_db)) -> Stock:
+    """Get a stock by its primary identifier."""
+    try:
+        return get_stock(db, stock_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/", response_model=list[Stock])
+def list_stocks_route(db: Session = Depends(get_db)) -> list[Stock]:
+    """List all stocks."""
+    try:
+        return list_stocks(db)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/{stock_id}", response_model=Stock)
+def update_stock_route(stock_id: int, stock: StockUpdate, db: Session = Depends(get_db)) -> Stock:
+    """Update a stock by its primary identifier."""
+    try:
+        return update_stock(db, stock_id, stock)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/{stock_id}", response_model=Stock)
+def delete_stock_route(stock_id: int, db: Session = Depends(get_db)) -> Stock:
+    """Delete a stock by its primary identifier."""
+    try:
+        return delete_stock(db, stock_id)
+        return {"message": "Stock deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
