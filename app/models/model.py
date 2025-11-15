@@ -57,7 +57,7 @@ class Transaction(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     portfolio_id: Mapped[int] = mapped_column(ForeignKey("portfolios.id"), index=True)
-    ticker_symbol: Mapped[str] = mapped_column(ForeignKey("stocks.ticker_symbol"), String(10), index=True)  # Fixed: "stocks" not "stock"
+    ticker_symbol: Mapped[str] = mapped_column(String(10), ForeignKey("stocks.ticker_symbol"), index=True)  # Fixed: "stocks" not "stock"
     transaction_type: Mapped[str] = mapped_column(String(10))  # "buy" or "sell"
     quantity: Mapped[float] = mapped_column(default=0.0, nullable=False)
     price: Mapped[float] = mapped_column(default=0.0, nullable=False)
