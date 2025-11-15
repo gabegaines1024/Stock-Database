@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.database.database import get_db
 from app.schemas import TransactionBase, Transaction, TransactionUpdate
 from app.crud import create_transaction, get_transaction, update_transaction, delete_transaction, list_transactions
 from typing import List
