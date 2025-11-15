@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database.database import get_db
+from dependencies.dependencies import get_db
 from app.schemas import StockBase, Stock, StockUpdate
 from app.crud import create_stock, get_stock, update_stock, delete_stock, list_stocks
 from typing import List
@@ -42,7 +42,8 @@ def update_stock_route(stock_id: int, stock: StockUpdate, db: Session = Depends(
 def delete_stock_route(stock_id: int, db: Session = Depends(get_db)) -> Stock:
     """Delete a stock by its primary identifier."""
     try:
-        return delete_stock(db, stock_id)
-        return {"message": "Stock deleted successfully"}
+        stock = get_stock(db, stock_id)
+        delete_stock(db, stock_id)
+        return stock
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

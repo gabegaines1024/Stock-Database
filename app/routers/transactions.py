@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database.database import get_db
+from dependencies.dependencies import get_db
 from app.schemas import TransactionBase, Transaction, TransactionUpdate
 from app.crud import create_transaction, get_transaction, update_transaction, delete_transaction, list_transactions
 from typing import List
@@ -43,6 +43,8 @@ def update_transaction_route(transaction_id: int, transaction: TransactionUpdate
 def delete_transaction_route(transaction_id: int, db: Session = Depends(get_db)) -> Transaction:
     """Delete a transaction by its primary identifier."""
     try:
-        return delete_transaction(db, transaction_id)
+        transaction = get_transaction(db, transaction_id)
+        delete_transaction(db, transaction_id)
+        return transaction
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

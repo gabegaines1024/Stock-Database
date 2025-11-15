@@ -22,6 +22,7 @@ def get_portfolio_route(portfolio_id: int, db: Session = Depends(get_db)) -> Por
         return get_portfolio(db, portfolio_id)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 @router.get("/", response_model=list[Portfolio])
 def list_portfolios_route(db: Session = Depends(get_db)) -> list[Portfolio]:
     """List all portfolios."""
@@ -43,7 +44,8 @@ def update_portfolio_route(portfolio_id: int, portfolio: PortfolioUpdate, db: Se
 def delete_portfolio_route(portfolio_id: int, db: Session = Depends(get_db)) -> Portfolio:
     """Delete a portfolio by its primary identifier."""
     try:
+        portfolio = get_portfolio(db, portfolio_id)
         delete_portfolio(db, portfolio_id)
-        return {"message": "Portfolio deleted successfully"}
+        return portfolio
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
