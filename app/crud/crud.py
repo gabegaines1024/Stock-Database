@@ -19,6 +19,7 @@ def create_stock(db: Session, stock: StockCreate) -> Stock:
         db.refresh(db_stock)
         return db_stock
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
 def get_stock(db: Session, stock_id: int) -> Optional[Stock]:
