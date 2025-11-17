@@ -12,6 +12,8 @@ def create_portfolio_route(portfolio: PortfolioBase, db: Session = Depends(get_d
     """Create a new portfolio."""
     try:
         return create_portfolio(db, portfolio)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -20,6 +22,8 @@ def get_portfolio_route(portfolio_id: int, db: Session = Depends(get_db)) -> Por
     """Get a portfolio by its primary identifier."""
     try:
         return get_portfolio(db, portfolio_id)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -28,6 +32,8 @@ def list_portfolios_route(db: Session = Depends(get_db)) -> list[Portfolio]:
     """List all portfolios."""
     try:
         return list_portfolios(db)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -37,6 +43,8 @@ def update_portfolio_route(portfolio_id: int, portfolio: PortfolioUpdate, db: Se
     try:
         update_portfolio(db, portfolio_id, portfolio)
         return get_portfolio(db, portfolio_id)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -47,5 +55,7 @@ def delete_portfolio_route(portfolio_id: int, db: Session = Depends(get_db)) -> 
         portfolio = get_portfolio(db, portfolio_id)
         delete_portfolio(db, portfolio_id)
         return portfolio
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

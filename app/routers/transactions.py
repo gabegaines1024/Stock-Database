@@ -12,6 +12,8 @@ def create_transaction_route(transaction: TransactionBase, db: Session = Depends
     """Create a new transaction."""
     try:
         return create_transaction(db, transaction)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -20,6 +22,8 @@ def get_transaction_route(transaction_id: int, db: Session = Depends(get_db)) ->
     """Get a transaction by its primary identifier."""
     try:
         return get_transaction(db, transaction_id)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -28,6 +32,8 @@ def list_transactions_route(db: Session = Depends(get_db)) -> List[Transaction]:
     """List all transactions."""
     try:
         return list_transactions(db)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -36,6 +42,8 @@ def update_transaction_route(transaction_id: int, transaction: TransactionUpdate
     """Update a transaction by its primary identifier."""
     try:
         return update_transaction(db, transaction_id, transaction)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -46,5 +54,7 @@ def delete_transaction_route(transaction_id: int, db: Session = Depends(get_db))
         transaction = get_transaction(db, transaction_id)
         delete_transaction(db, transaction_id)
         return transaction
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

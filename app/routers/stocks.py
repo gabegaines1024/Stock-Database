@@ -11,6 +11,8 @@ def create_stock_route(stock: StockBase, db: Session = Depends(get_db)) -> Stock
     """Create a new stock."""
     try:
         return create_stock(db, stock)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
@@ -19,6 +21,8 @@ def get_stock_route(stock_id: int, db: Session = Depends(get_db)) -> Stock:
     """Get a stock by its primary identifier."""
     try:
         return get_stock(db, stock_id)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -27,6 +31,8 @@ def list_stocks_route(db: Session = Depends(get_db)) -> list[Stock]:
     """List all stocks."""
     try:
         return list_stocks(db)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -35,6 +41,8 @@ def update_stock_route(stock_id: int, stock: StockUpdate, db: Session = Depends(
     """Update a stock by its primary identifier."""
     try:
         return update_stock(db, stock_id, stock)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -45,5 +53,7 @@ def delete_stock_route(stock_id: int, db: Session = Depends(get_db)) -> Stock:
         stock = get_stock(db, stock_id)
         delete_stock(db, stock_id)
         return stock
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

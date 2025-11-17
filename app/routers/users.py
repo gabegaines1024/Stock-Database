@@ -12,6 +12,8 @@ def create_user_route(user: UserCreate, db: Session = Depends(get_db)) -> User:
     """Create a new user."""
     try:
         return create_user(db, user)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -20,6 +22,8 @@ def get_user_route(user_id: int, db: Session = Depends(get_db)) -> User:
     """Get a user by its primary identifier."""
     try:
         return get_user(db, user_id)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -28,5 +32,7 @@ def list_users_route(db: Session = Depends(get_db)) -> List[User]:
     """List all users."""
     try:
         return list_users(db)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
