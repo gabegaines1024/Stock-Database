@@ -1,0 +1,126 @@
+.transactions {
+  min-height: calc(100vh - 80px);
+  padding: var(--spacing-3xl) 0;
+}
+
+.transactions-actions {
+  margin-bottom: var(--spacing-xl);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.transactions-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 120px 100px 100px 100px 100px 100px 120px 100px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  color: var(--storm-cloud);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 120px 100px 100px 100px 100px 100px 120px 100px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all var(--transition-base);
+  align-items: center;
+}
+
+.table-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.ticker-cell {
+  font-weight: 600;
+  color: var(--storm-white);
+}
+
+.total-cell {
+  font-weight: 600;
+  color: var(--accent-teal);
+}
+
+.transaction-type-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.transaction-type-badge.buy {
+  background: rgba(46, 204, 113, 0.2);
+  color: var(--accent-green);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.transaction-type-badge.sell {
+  background: rgba(231, 76, 60, 0.2);
+  color: var(--accent-red);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.empty-card {
+  text-align: center;
+  padding: var(--spacing-3xl);
+}
+
+.empty-state {
+  color: var(--storm-cloud);
+  font-size: 1.125rem;
+}
+
+.loading {
+  text-align: center;
+  padding: var(--spacing-3xl);
+  color: var(--storm-cloud);
+  font-size: 1.25rem;
+}
+
+@media (max-width: 1200px) {
+  .table-header,
+  .table-row {
+    grid-template-columns: 100px 80px 80px 80px 80px 80px 100px 80px;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 968px) {
+  .transactions-table {
+    overflow-x: auto;
+  }
+  
+  .table-header,
+  .table-row {
+    min-width: 800px;
+  }
+}
+
