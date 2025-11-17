@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { apiService, Portfolio, Transaction, Stock } from '../services/api';
+import { apiService } from '../services/api';
+import type { Portfolio, Transaction, Stock } from '../services/api';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import './Dashboard.css';
@@ -18,13 +19,22 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     try {
       const [portfoliosRes, transactionsRes, stocksRes] = await Promise.all([
-        apiService.portfolios.getAll(),
-        apiService.transactions.getAll(),
-        apiService.stocks.getAll(),
+        apiService.portfolios.getAll().catch(err => {
+          console.error('Error loading portfolios:', err);
+          return { data: [] };
+        }),
+        apiService.transactions.getAll().catch(err => {
+          console.error('Error loading transactions:', err);
+          return { data: [] };
+        }),
+        apiService.stocks.getAll().catch(err => {
+          console.error('Error loading stocks:', err);
+          return { data: [] };
+        }),
       ]);
-      setPortfolios(portfoliosRes.data);
-      setTransactions(transactionsRes.data.slice(0, 5));
-      setStocks(stocksRes.data);
+      setPortfolios(portfoliosRes.data || []);
+      setTransactions((transactionsRes.data || []).slice(0, 5));
+      setStocks(stocksRes.data || []);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {

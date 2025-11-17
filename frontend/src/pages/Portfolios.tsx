@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { apiService, Portfolio, User } from '../services/api';
+import { apiService } from '../services/api';
+import type { Portfolio, User } from '../services/api';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import './Portfolios.css';

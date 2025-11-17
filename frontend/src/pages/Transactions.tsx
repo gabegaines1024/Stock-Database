@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { apiService, Transaction, Portfolio, Stock } from '../services/api';
+import { apiService } from '../services/api';
+import type { Transaction, Portfolio, Stock } from '../services/api';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import './Transactions.css';
