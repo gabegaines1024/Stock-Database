@@ -1,3 +1,4 @@
+from app.schemas.schemas import StockCreate
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -10,7 +11,8 @@ router = APIRouter(prefix="/stocks", tags=["stocks"])
 def create_stock_route(stock: StockBase, db: Session = Depends(get_db)) -> Stock:
     """Create a new stock."""
     try:
-        return create_stock(db, stock)
+        new_stock = create_stock(db, stock)
+        return new_stock
     except HTTPException as e:
         raise e
     except Exception as e:

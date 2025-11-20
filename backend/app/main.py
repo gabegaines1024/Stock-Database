@@ -7,7 +7,7 @@ from app.database.database import engine, SessionLocal
 from app.models.model import Base
 
 # Router imports
-from app.routers import users, portfolios, transactions, stocks
+from app.routers import users, portfolios, transactions, stocks, auth
 
 # API Client import
 from app.api_client.api_client import StockAPIClient
@@ -31,6 +31,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(portfolios.router)
 app.include_router(transactions.router)

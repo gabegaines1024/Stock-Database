@@ -207,6 +207,7 @@ def create_user(db: Session, user: UserCreate) -> User:
         email=user.email,
         username=user.username,
         hashed_password=hashed_password_str,
+        disabled=user.disabled,
         created_at=datetime.now()
     )
     try:

@@ -97,6 +97,7 @@ class UserBase(BaseModel):
     email: str = Field(..., min_length=1, max_length=20)
     username: str = Field(..., min_length=1, max_length=100)
     disabled: bool = Field(default=True)
+    created_at: datetime
 
 
 class UserCreate(UserBase):
@@ -110,6 +111,10 @@ class UserUpdate(BaseModel):
     username: Optional[str] = Field(None, min_length=1, max_length=255)
     password: Optional[str] = Field(None, min_length=8, max_length=100)
 
+class UserLogin(BaseModel):
+    username: str = Field(..., min_length =  1, max_length = 100)
+    password: str = Field(..., min_length = 8, max_length = 100)
+
 
 class User(UserBase):
     """API response - inherits base fields + adds id and timestamp."""
@@ -119,8 +124,11 @@ class User(UserBase):
         from_attributes = True
 
 class Token(BaseModel):
+    """Token response schema for authentication."""
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
+    """Token payload data schema."""
     username: Optional[str] = None
