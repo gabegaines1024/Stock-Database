@@ -96,11 +96,13 @@ class UserBase(BaseModel):
     """Shared fields for all user operations."""
     email: str = Field(..., min_length=1, max_length=255)
     username: str = Field(..., min_length=1, max_length=255)
+    disabled: bool = Field(default=True)
 
 
 class UserCreate(UserBase):
     """For creating users - includes password field."""
     password: str = Field(..., min_length=8, max_length=100)
+    disabled = False
 
 
 class UserUpdate(BaseModel):
