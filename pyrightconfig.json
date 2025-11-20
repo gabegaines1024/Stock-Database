@@ -1,0 +1,17 @@
+{
+    "executionEnvironments": [
+        {
+            "root": "backend",
+            "pythonVersion": "3.12",
+            "pythonPlatform": "Darwin",
+            "venvPath": "backend",
+            "venv": ".venv",
+            "extraPaths": [
+                "backend",
+                "backend/.venv/lib/python3.12/site-packages"
+            ]
+        }
+    ],
+    "venvPath": "backend",
+    "venv": ".venv"
+}
