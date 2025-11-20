@@ -219,9 +219,9 @@ def create_user(db: Session, user: UserCreate) -> User:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def get_user(db: Session, user_id: int) -> User:
+def get_user(db: Session, username: str) -> User:
     """Retrieve a user by its primary identifier."""
-    db_user = db.query(User).filter(User.id == user_id).first()
+    db_user = db.query(User).filter(User.username == username).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user

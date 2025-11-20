@@ -94,15 +94,14 @@ class Transaction(TransactionBase):
 # ============== USER SCHEMAS ==============
 class UserBase(BaseModel):
     """Shared fields for all user operations."""
-    email: str = Field(..., min_length=1, max_length=255)
-    username: str = Field(..., min_length=1, max_length=255)
+    email: str = Field(..., min_length=1, max_length=20)
+    username: str = Field(..., min_length=1, max_length=100)
     disabled: bool = Field(default=True)
 
 
 class UserCreate(UserBase):
     """For creating users - includes password field."""
     password: str = Field(..., min_length=8, max_length=100)
-    disabled = False
 
 
 class UserUpdate(BaseModel):
@@ -114,7 +113,6 @@ class UserUpdate(BaseModel):
 
 class User(UserBase):
     """API response - inherits base fields + adds id and timestamp."""
-    id: int
     created_at: datetime
     
     class Config:

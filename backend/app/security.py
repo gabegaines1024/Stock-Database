@@ -8,7 +8,9 @@ from app.database import get_db
 from app.models import User
 from app.config import settings
 from dependencies import get_current_user
-from app.schemas.schemas import UserBase, User
+from app.schemas.schemas import UserBase, UserCreate, UserUpdate, User
+from app.crud.crud import get_user, create_user
+from datetime import datetime, timedelta
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -23,8 +25,17 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
     return pwd_context.verify(plain_password, hashed_password)
 
-def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user),]        
-):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive User")
+def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
+    """Authenticate a user against the database."""
+    user = get_user(db, username)
+    if not user:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
+    return User(
+        email=user.email,
+        username=user.username,
+        disabled=False,
+        created_at=datetime.now()
+    )
+
