@@ -1,0 +1,9 @@
+# Learning dependencies for JWT and Passlib examples
+# Install with: pip install -r learning/requirements.txt
+
+# Password hashing
+passlib[bcrypt]==1.7.4
+
+# JWT token handling
+PyJWT==2.8.0
+
