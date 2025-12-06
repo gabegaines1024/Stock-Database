@@ -26,15 +26,16 @@ export const Portfolios: React.FC = () => {
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       await apiService.portfolios.create(formData);
       await loadData();
       setShowForm(false);
       setFormData({ name: '' });
-    } catch (error: any) {
-      alert(error.response?.data?.detail || 'Error creating portfolio');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'Error creating portfolio');
     }
   };
 
@@ -43,8 +44,9 @@ export const Portfolios: React.FC = () => {
     try {
       await apiService.portfolios.delete(id);
       await loadData();
-    } catch (error: any) {
-      alert(error.response?.data?.detail || 'Error deleting portfolio');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'Error deleting portfolio');
     }
   };
 
@@ -81,7 +83,7 @@ export const Portfolios: React.FC = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ name: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ name: e.target.value })}
                   required
                   placeholder="My Portfolio"
                 />
@@ -97,7 +99,7 @@ export const Portfolios: React.FC = () => {
           </Card>
         ) : (
           <div className="portfolios-grid">
-            {portfolios.map((portfolio) => (
+            {portfolios.map((portfolio: Portfolio) => (
               <Card key={portfolio.id} hover className="portfolio-card fade-in">
                 <div className="portfolio-header">
                   <h3 className="portfolio-name">{portfolio.name}</h3>

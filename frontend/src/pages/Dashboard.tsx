@@ -20,23 +20,23 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     // Subscribe to live price updates for unique tickers in transactions
-    const uniqueTickers = new Set(transactions.map(t => t.ticker_symbol));
+    const uniqueTickers = new Set(transactions.map((t: Transaction) => t.ticker_symbol));
     
     const handlePriceUpdate = (ticker: string, price: number) => {
-      setLivePrices(prev => {
+      setLivePrices((prev: Map<string, number>) => {
         const updated = new Map(prev);
         updated.set(ticker, price);
         return updated;
       });
     };
 
-    uniqueTickers.forEach(ticker => {
+    Array.from(uniqueTickers).forEach((ticker: string) => {
       stockPriceWebSocket.subscribe(ticker, handlePriceUpdate);
     });
 
     return () => {
       // Cleanup: unsubscribe from all tickers
-      uniqueTickers.forEach(ticker => {
+      Array.from(uniqueTickers).forEach((ticker: string) => {
         stockPriceWebSocket.unsubscribe(ticker, handlePriceUpdate);
       });
     };
@@ -45,15 +45,15 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     try {
       const [portfoliosRes, transactionsRes, stocksRes] = await Promise.all([
-        apiService.portfolios.getAll().catch(err => {
+        apiService.portfolios.getAll().catch((err: unknown) => {
           console.error('Error loading portfolios:', err);
           return { data: [] };
         }),
-        apiService.transactions.getAll().catch(err => {
+        apiService.transactions.getAll().catch((err: unknown) => {
           console.error('Error loading transactions:', err);
           return { data: [] };
         }),
-        apiService.stocks.getAll().catch(err => {
+        apiService.stocks.getAll().catch((err: unknown) => {
           console.error('Error loading stocks:', err);
           return { data: [] };
         }),
@@ -137,11 +137,12 @@ export const Dashboard: React.FC = () => {
                 <p className="empty-state">No transactions yet. Start by adding a transaction!</p>
               ) : (
                 <div className="transactions-list">
-                  {transactions.map((transaction) => {
+                  {transactions.map((transaction: Transaction) => {
                     const livePrice = livePrices.get(transaction.ticker_symbol);
-                    const priceChange = livePrice 
-                      ? ((livePrice - transaction.price) / transaction.price * 100).toFixed(2)
+                    const priceChangeNum = livePrice 
+                      ? ((livePrice - transaction.price) / transaction.price * 100)
                       : null;
+                    const priceChange = priceChangeNum !== null ? priceChangeNum.toFixed(2) : null;
                     return (
                       <div key={transaction.id} className="transaction-item">
                         <div className="transaction-info">
@@ -155,9 +156,9 @@ export const Dashboard: React.FC = () => {
                           {livePrice && (
                             <span className="transaction-live-price">
                               Now: ${livePrice.toFixed(2)} 
-                              {priceChange && (
-                                <span className={parseFloat(priceChange) >= 0 ? 'price-up' : 'price-down'}>
-                                  {' '}({priceChange >= 0 ? '+' : ''}{priceChange}%)
+                              {priceChange && priceChangeNum !== null && (
+                                <span className={priceChangeNum >= 0 ? 'price-up' : 'price-down'}>
+                                  {' '}({priceChangeNum >= 0 ? '+' : ''}{priceChange}%)
                                 </span>
                               )}
                               <span className="live-indicator"> ●</span>
@@ -209,4 +210,3 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
-
