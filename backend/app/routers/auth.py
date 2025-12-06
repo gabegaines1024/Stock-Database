@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
+from typing import cast
 from app.database import get_db
 from app.schemas.schemas import Token, UserCreate, User
 from app.models.model import User as UserModel
@@ -36,7 +37,9 @@ def register_user(
     
     try:
         new_user = create_user(db, user_data)
-        return new_user
+        # FastAPI will automatically convert SQLAlchemy model to Pydantic schema
+        # using from_attributes=True, but we cast for type checking
+        return cast(User, new_user)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -72,4 +75,6 @@ def get_current_user_info(
     current_user: UserModel = Depends(get_current_user)
 ) -> User:
     """Get current authenticated user information."""
-    return current_user
+    # FastAPI will automatically convert SQLAlchemy model to Pydantic schema
+    # using from_attributes=True, but we cast for type checking
+    return cast(User, current_user)
