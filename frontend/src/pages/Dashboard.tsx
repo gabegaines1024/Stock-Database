@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { stockPriceWebSocket } from '../services/websocket';
 import type { Portfolio, Transaction, Stock } from '../services/api';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -11,10 +12,35 @@ export const Dashboard: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
+  const [livePrices, setLivePrices] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    // Subscribe to live price updates for unique tickers in transactions
+    const uniqueTickers = new Set(transactions.map(t => t.ticker_symbol));
+    
+    const handlePriceUpdate = (ticker: string, price: number) => {
+      setLivePrices(prev => {
+        const updated = new Map(prev);
+        updated.set(ticker, price);
+        return updated;
+      });
+    };
+
+    uniqueTickers.forEach(ticker => {
+      stockPriceWebSocket.subscribe(ticker, handlePriceUpdate);
+    });
+
+    return () => {
+      // Cleanup: unsubscribe from all tickers
+      uniqueTickers.forEach(ticker => {
+        stockPriceWebSocket.unsubscribe(ticker, handlePriceUpdate);
+      });
+    };
+  }, [transactions]);
 
   const loadData = async () => {
     try {
@@ -111,22 +137,39 @@ export const Dashboard: React.FC = () => {
                 <p className="empty-state">No transactions yet. Start by adding a transaction!</p>
               ) : (
                 <div className="transactions-list">
-                  {transactions.map((transaction) => (
-                    <div key={transaction.id} className="transaction-item">
-                      <div className="transaction-info">
-                        <span className="transaction-ticker">{transaction.ticker_symbol}</span>
-                        <span className={`transaction-type ${transaction.transaction_type}`}>
-                          {transaction.transaction_type.toUpperCase()}
-                        </span>
+                  {transactions.map((transaction) => {
+                    const livePrice = livePrices.get(transaction.ticker_symbol);
+                    const priceChange = livePrice 
+                      ? ((livePrice - transaction.price) / transaction.price * 100).toFixed(2)
+                      : null;
+                    return (
+                      <div key={transaction.id} className="transaction-item">
+                        <div className="transaction-info">
+                          <span className="transaction-ticker">{transaction.ticker_symbol}</span>
+                          <span className={`transaction-type ${transaction.transaction_type}`}>
+                            {transaction.transaction_type.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="transaction-details">
+                          <span>{transaction.quantity} @ ${transaction.price.toFixed(2)}</span>
+                          {livePrice && (
+                            <span className="transaction-live-price">
+                              Now: ${livePrice.toFixed(2)} 
+                              {priceChange && (
+                                <span className={parseFloat(priceChange) >= 0 ? 'price-up' : 'price-down'}>
+                                  {' '}({priceChange >= 0 ? '+' : ''}{priceChange}%)
+                                </span>
+                              )}
+                              <span className="live-indicator"> ●</span>
+                            </span>
+                          )}
+                          <span className="transaction-date">
+                            {new Date(transaction.executed_at).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
-                      <div className="transaction-details">
-                        <span>{transaction.quantity} @ ${transaction.price.toFixed(2)}</span>
-                        <span className="transaction-date">
-                          {new Date(transaction.executed_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

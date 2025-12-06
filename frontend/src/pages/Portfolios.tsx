@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { apiService } from '../services/api';
-import type { Portfolio, User } from '../services/api';
+import type { Portfolio } from '../services/api';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import './Portfolios.css';
 
 export const Portfolios: React.FC = () => {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ name: '', user_id: 1 });
+  const [formData, setFormData] = useState({ name: '' });
 
   useEffect(() => {
     loadData();
@@ -18,15 +17,8 @@ export const Portfolios: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const [portfoliosRes, usersRes] = await Promise.all([
-        apiService.portfolios.getAll(),
-        apiService.users.getAll(),
-      ]);
+      const portfoliosRes = await apiService.portfolios.getAll();
       setPortfolios(portfoliosRes.data);
-      setUsers(usersRes.data);
-      if (usersRes.data.length > 0) {
-        setFormData({ ...formData, user_id: usersRes.data[0].id });
-      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -40,7 +32,7 @@ export const Portfolios: React.FC = () => {
       await apiService.portfolios.create(formData);
       await loadData();
       setShowForm(false);
-      setFormData({ name: '', user_id: users[0]?.id || 1 });
+      setFormData({ name: '' });
     } catch (error: any) {
       alert(error.response?.data?.detail || 'Error creating portfolio');
     }
@@ -89,24 +81,10 @@ export const Portfolios: React.FC = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => setFormData({ name: e.target.value })}
                   required
                   placeholder="My Portfolio"
                 />
-              </div>
-              <div className="form-group">
-                <label>User</label>
-                <select
-                  value={formData.user_id}
-                  onChange={(e) => setFormData({ ...formData, user_id: parseInt(e.target.value) })}
-                  required
-                >
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.username} ({user.email})
-                    </option>
-                  ))}
-                </select>
               </div>
               <Button type="submit" variant="primary">Create Portfolio</Button>
             </form>
@@ -132,10 +110,6 @@ export const Portfolios: React.FC = () => {
                   </Button>
                 </div>
                 <div className="portfolio-info">
-                  <div className="info-item">
-                    <span className="info-label">User ID:</span>
-                    <span className="info-value">{portfolio.user_id}</span>
-                  </div>
                   <div className="info-item">
                     <span className="info-label">Created:</span>
                     <span className="info-value">

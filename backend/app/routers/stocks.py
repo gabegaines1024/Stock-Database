@@ -2,14 +2,20 @@ from app.schemas.schemas import StockCreate
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.dependencies import get_current_user
+from app.models.model import User
 from app.schemas import StockBase, Stock, StockUpdate
 from app.crud import create_stock, get_stock, update_stock, delete_stock, list_stocks
 from typing import List
 router = APIRouter(prefix="/stocks", tags=["stocks"])
 
 @router.post("/", response_model=Stock)
-def create_stock_route(stock: StockBase, db: Session = Depends(get_db)) -> Stock:
-    """Create a new stock."""
+def create_stock_route(
+    stock: StockBase,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Stock:
+    """Create a new stock (requires authentication)."""
     try:
         new_stock = create_stock(db, stock)
         return new_stock

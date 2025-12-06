@@ -136,6 +136,36 @@
   color: var(--storm-mist);
 }
 
+.transaction-live-price {
+  color: var(--accent-blue);
+  font-weight: 500;
+  margin-left: var(--spacing-sm);
+}
+
+.price-up {
+  color: var(--accent-green);
+}
+
+.price-down {
+  color: var(--accent-red);
+}
+
+.live-indicator {
+  color: #4ade80;
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .empty-state {
   text-align: center;
   color: var(--storm-cloud);

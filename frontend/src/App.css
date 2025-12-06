@@ -8,3 +8,15 @@
   flex: 1;
   width: 100%;
 }
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.loading-container .loading {
+  font-size: 1.25rem;
+  color: var(--storm-cloud);
+}

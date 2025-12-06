@@ -9,6 +9,31 @@ const api = axios.create({
   },
 });
 
+// Add request interceptor to include auth token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Add response interceptor to handle 401 errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid, clear it
+      localStorage.removeItem('token');
+      // Redirect to login if not already there
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Types
 export interface User {
   id: number;
@@ -45,7 +70,6 @@ export interface Portfolio {
 
 export interface PortfolioBase {
   name: string;
-  user_id: number;
 }
 
 export interface Transaction {
@@ -84,6 +108,17 @@ export interface StockSearchResult {
 
 // API Functions
 export const apiService = {
+  // Auth
+  auth: {
+    login: (formData: URLSearchParams) => api.post<{ access_token: string; token_type: string }>('/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    }),
+    register: (data: UserCreate) => api.post<User>('/auth/register', data),
+    getMe: () => api.get<User>('/auth/me'),
+  },
+
   // Users
   users: {
     getAll: () => api.get<User[]>('/users'),

@@ -4,6 +4,9 @@ fastapi==0.115.5
 # ASGI server for running FastAPI
 uvicorn[standard]==0.32.1
 
+# Database ORM
+sqlalchemy>=2.0.44
+
 # HTTP requests (you're already using this in api_client.py)
 requests==2.32.3
 

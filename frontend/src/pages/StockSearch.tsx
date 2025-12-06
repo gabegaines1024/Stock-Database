@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
+import { stockPriceWebSocket } from '../services/websocket';
 import type { Stock, StockSearchResult } from '../services/api';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -13,10 +14,37 @@ export const StockSearch: React.FC = () => {
   const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [livePrices, setLivePrices] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
     loadStocks();
-  }, []);
+    
+    // Set up WebSocket price updates
+    const handlePriceUpdate = (ticker: string, newPrice: number) => {
+      setLivePrices(prev => {
+        const updated = new Map(prev);
+        updated.set(ticker, newPrice);
+        return updated;
+      });
+      
+      // Update selected stock price if it matches
+      if (selectedStock && selectedStock.ticker_symbol === ticker) {
+        setPrice(newPrice);
+      }
+    };
+
+    // Subscribe to all tracked stocks
+    stocks.forEach(stock => {
+      stockPriceWebSocket.subscribe(stock.ticker_symbol, handlePriceUpdate);
+    });
+
+    return () => {
+      // Cleanup: unsubscribe from all stocks
+      stocks.forEach(stock => {
+        stockPriceWebSocket.unsubscribe(stock.ticker_symbol, handlePriceUpdate);
+      });
+    };
+  }, [stocks, selectedStock]);
 
   const loadStocks = async () => {
     try {
@@ -46,9 +74,26 @@ export const StockSearch: React.FC = () => {
     setPriceLoading(true);
     setSelectedStock(null);
     try {
+      // First try to get cached price from WebSocket
+      const cachedPrice = livePrices.get(ticker.toUpperCase());
+      if (cachedPrice) {
+        setPrice(cachedPrice);
+        setSelectedStock({ id: 0, ticker_symbol: ticker, company_name: '' });
+        setPriceLoading(false);
+        return;
+      }
+
+      // Fallback to API call
       const response = await apiService.stocks.getPrice(ticker);
       setPrice(response.data.price);
       setSelectedStock({ id: 0, ticker_symbol: ticker, company_name: '' });
+      
+      // Subscribe to live updates for this ticker
+      stockPriceWebSocket.subscribe(ticker, (updatedTicker, newPrice) => {
+        if (updatedTicker === ticker.toUpperCase()) {
+          setPrice(newPrice);
+        }
+      });
     } catch (error) {
       console.error('Error getting price:', error);
       setPrice(null);
@@ -143,23 +188,31 @@ export const StockSearch: React.FC = () => {
             <p className="empty-state">No stocks tracked yet. Search and add stocks to get started!</p>
           ) : (
             <div className="stocks-grid">
-              {stocks.map((stock) => (
-                <div key={stock.id} className="stock-item">
-                  <div className="stock-info">
-                    <div className="stock-symbol">{stock.ticker_symbol}</div>
-                    <div className="stock-name">{stock.company_name}</div>
-                    {stock.sector && <div className="stock-sector">{stock.sector}</div>}
+              {stocks.map((stock) => {
+                const livePrice = livePrices.get(stock.ticker_symbol);
+                return (
+                  <div key={stock.id} className="stock-item">
+                    <div className="stock-info">
+                      <div className="stock-symbol">{stock.ticker_symbol}</div>
+                      <div className="stock-name">{stock.company_name}</div>
+                      {stock.sector && <div className="stock-sector">{stock.sector}</div>}
+                      {livePrice && (
+                        <div className="stock-live-price">
+                          ${livePrice.toFixed(2)} <span className="live-indicator">●</span>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGetPrice(stock.ticker_symbol)}
+                      disabled={priceLoading}
+                    >
+                      Get Price
+                    </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleGetPrice(stock.ticker_symbol)}
-                    disabled={priceLoading}
-                  >
-                    Get Price
-                  </Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>

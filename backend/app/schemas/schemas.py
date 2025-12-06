@@ -35,11 +35,10 @@ class Stock(StockBase):
 class PortfolioBase(BaseModel):
     """Shared fields for all portfolio operations."""
     name: str = Field(..., min_length=1, max_length=100)
-    user_id: int = Field(..., gt=0)
 
 
 class PortfolioCreate(PortfolioBase):
-    """For creating portfolios - inherits all from Base."""
+    """For creating portfolios - user_id comes from authenticated user."""
     pass
 
 
@@ -50,8 +49,9 @@ class PortfolioUpdate(BaseModel):
 
 
 class Portfolio(PortfolioBase):
-    """API response - inherits base fields + adds id and timestamp."""
+    """API response - inherits base fields + adds id, user_id and timestamp."""
     id: int
+    user_id: int
     created_at: datetime
     
     class Config:
@@ -94,14 +94,14 @@ class Transaction(TransactionBase):
 # ============== USER SCHEMAS ==============
 class UserBase(BaseModel):
     """Shared fields for all user operations."""
-    email: str = Field(..., min_length=1, max_length=20)
-    username: str = Field(..., min_length=1, max_length=100)
-    disabled: bool = Field(default=True)
-    created_at: datetime
+    email: str = Field(..., min_length=1, max_length=255)
+    username: str = Field(..., min_length=1, max_length=255)
 
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
     """For creating users - includes password field."""
+    email: str = Field(..., min_length=1, max_length=255)
+    username: str = Field(..., min_length=1, max_length=255)
     password: str = Field(..., min_length=8, max_length=100)
 
 
@@ -118,6 +118,8 @@ class UserLogin(BaseModel):
 
 class User(UserBase):
     """API response - inherits base fields + adds id and timestamp."""
+    id: int
+    disabled: bool
     created_at: datetime
     
     class Config:

@@ -73,9 +73,9 @@ def delete_stock(db: Session, stock_id: int) -> None:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def create_portfolio(db: Session, portfolio: PortfolioCreate) -> Portfolio:
+def create_portfolio(db: Session, portfolio: PortfolioCreate, user_id: int) -> Portfolio:
     """Create a new portfolio record."""
-    db_portfolio = Portfolio(name=portfolio.name, user_id=portfolio.user_id)
+    db_portfolio = Portfolio(name=portfolio.name, user_id=user_id)
     try:
         db.add(db_portfolio)
         db.commit()
@@ -86,17 +86,20 @@ def create_portfolio(db: Session, portfolio: PortfolioCreate) -> Portfolio:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def get_portfolio(db: Session, portfolio_id: int) -> Portfolio:
-    """Retrieve a portfolio by its primary identifier."""
-    db_portfolio = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
+def get_portfolio(db: Session, portfolio_id: int, user_id: int) -> Portfolio:
+    """Retrieve a portfolio by its primary identifier, ensuring it belongs to the user."""
+    db_portfolio = db.query(Portfolio).filter(
+        Portfolio.id == portfolio_id,
+        Portfolio.user_id == user_id
+    ).first()
     if not db_portfolio:
         raise HTTPException(status_code=404, detail="Portfolio not found")
     return db_portfolio
 
 
-def list_portfolios(db: Session) -> List[Portfolio]:
-    """Return a list of all stored portfolios."""
-    db_portfolios = db.query(Portfolio).all()
+def list_portfolios(db: Session, user_id: int) -> List[Portfolio]:
+    """Return a list of all portfolios for a specific user."""
+    db_portfolios = db.query(Portfolio).filter(Portfolio.user_id == user_id).all()
     return db_portfolios
 
 
@@ -104,12 +107,18 @@ def update_portfolio(
     db: Session,
     portfolio_id: int,
     portfolio: PortfolioUpdate,
+    user_id: int,
 ) -> Portfolio:
-    """Update an existing portfolio record."""
-    db_portfolio = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
+    """Update an existing portfolio record, ensuring it belongs to the user."""
+    db_portfolio = db.query(Portfolio).filter(
+        Portfolio.id == portfolio_id,
+        Portfolio.user_id == user_id
+    ).first()
     if not db_portfolio:
         raise HTTPException(status_code=404, detail="Portfolio not found")
     update_data = portfolio.model_dump(exclude_unset=True, exclude_none=True)
+    # Don't allow changing user_id
+    update_data.pop('user_id', None)
     for field, value in update_data.items():
         setattr(db_portfolio, field, value)
     try:
@@ -121,9 +130,12 @@ def update_portfolio(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def delete_portfolio(db: Session, portfolio_id: int) -> None:
-    """Delete a portfolio record from the database."""
-    db_portfolio = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
+def delete_portfolio(db: Session, portfolio_id: int, user_id: int) -> None:
+    """Delete a portfolio record from the database, ensuring it belongs to the user."""
+    db_portfolio = db.query(Portfolio).filter(
+        Portfolio.id == portfolio_id,
+        Portfolio.user_id == user_id
+    ).first()
     if not db_portfolio:
         raise HTTPException(status_code=404, detail="Portfolio not found")
     try:
@@ -137,8 +149,17 @@ def delete_portfolio(db: Session, portfolio_id: int) -> None:
 def create_transaction(
     db: Session,
     transaction: TransactionCreate,
+    user_id: int,
 ) -> Transaction:
-    """Create a new transaction record."""
+    """Create a new transaction record, ensuring the portfolio belongs to the user."""
+    # Verify portfolio belongs to user
+    portfolio = db.query(Portfolio).filter(
+        Portfolio.id == transaction.portfolio_id,
+        Portfolio.user_id == user_id
+    ).first()
+    if not portfolio:
+        raise HTTPException(status_code=404, detail="Portfolio not found")
+    
     db_transaction = Transaction(portfolio_id=transaction.portfolio_id, ticker_symbol=transaction.ticker_symbol, transaction_type=transaction.transaction_type, quantity=transaction.quantity, price=transaction.price)
     try:
         db.add(db_transaction)
@@ -150,18 +171,22 @@ def create_transaction(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def get_transaction(db: Session, transaction_id: int) -> Optional[Transaction]:
-    """Retrieve a transaction by its primary identifier."""
-    # TODO: Implement retrieval logic
-    db_transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
+def get_transaction(db: Session, transaction_id: int, user_id: int) -> Optional[Transaction]:
+    """Retrieve a transaction by its primary identifier, ensuring it belongs to the user's portfolio."""
+    db_transaction = db.query(Transaction).join(Portfolio).filter(
+        Transaction.id == transaction_id,
+        Portfolio.user_id == user_id
+    ).first()
     if not db_transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
     return db_transaction
 
 
-def list_transactions(db: Session) -> List[Transaction]:
-    """Return an iterable of all stored transactions."""
-    db_transactions = db.query(Transaction).all()
+def list_transactions(db: Session, user_id: int) -> List[Transaction]:
+    """Return all transactions for portfolios belonging to the user."""
+    db_transactions = db.query(Transaction).join(Portfolio).filter(
+        Portfolio.user_id == user_id
+    ).all()
     return db_transactions
 
 
@@ -169,12 +194,26 @@ def update_transaction(
     db: Session,
     transaction_id: int,
     transaction: TransactionUpdate,
+    user_id: int,
 ) -> Transaction:
-    """Update an existing transaction record."""
-    db_transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
+    """Update an existing transaction record, ensuring it belongs to the user's portfolio."""
+    db_transaction = db.query(Transaction).join(Portfolio).filter(
+        Transaction.id == transaction_id,
+        Portfolio.user_id == user_id
+    ).first()
     if not db_transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    # If portfolio_id is being updated, verify new portfolio belongs to user
     update_data = transaction.model_dump(exclude_unset=True, exclude_none=True)
+    if 'portfolio_id' in update_data:
+        portfolio = db.query(Portfolio).filter(
+            Portfolio.id == update_data['portfolio_id'],
+            Portfolio.user_id == user_id
+        ).first()
+        if not portfolio:
+            raise HTTPException(status_code=404, detail="Portfolio not found")
+    
     for field, value in update_data.items():
         setattr(db_transaction, field, value)
     try:
@@ -186,9 +225,12 @@ def update_transaction(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def delete_transaction(db: Session, transaction_id: int) -> None:
-    """Delete a transaction record from the database."""
-    db_transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
+def delete_transaction(db: Session, transaction_id: int, user_id: int) -> None:
+    """Delete a transaction record from the database, ensuring it belongs to the user's portfolio."""
+    db_transaction = db.query(Transaction).join(Portfolio).filter(
+        Transaction.id == transaction_id,
+        Portfolio.user_id == user_id
+    ).first()
     if not db_transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
     try:
@@ -207,7 +249,7 @@ def create_user(db: Session, user: UserCreate) -> User:
         email=user.email,
         username=user.username,
         hashed_password=hashed_password_str,
-        disabled=user.disabled,
+        disabled=False,  # New users are enabled by default
         created_at=datetime.now()
     )
     try:

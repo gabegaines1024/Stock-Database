@@ -85,6 +85,18 @@
   width: 80%;
 }
 
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.user-name {
+  color: var(--storm-white);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 768px) {
   .header-container {
     flex-direction: column;
