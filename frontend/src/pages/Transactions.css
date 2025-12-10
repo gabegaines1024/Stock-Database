@@ -29,7 +29,7 @@
 
 .table-header {
   display: grid;
-  grid-template-columns: 120px 100px 100px 100px 100px 100px 120px 100px;
+  grid-template-columns: 120px 100px 100px 100px 100px 100px 120px 120px;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
   background: rgba(255, 255, 255, 0.03);
@@ -43,7 +43,7 @@
 
 .table-row {
   display: grid;
-  grid-template-columns: 120px 100px 100px 100px 100px 100px 120px 100px;
+  grid-template-columns: 120px 100px 100px 100px 100px 100px 120px 120px;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
   background: rgba(255, 255, 255, 0.03);
@@ -125,10 +125,22 @@
   font-weight: 600;
 }
 
+.transaction-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.edit-transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
 @media (max-width: 1200px) {
   .table-header,
   .table-row {
-    grid-template-columns: 100px 80px 80px 80px 80px 80px 100px 80px;
+    grid-template-columns: 100px 80px 80px 80px 80px 80px 100px 100px;
     font-size: 0.875rem;
   }
 }

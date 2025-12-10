@@ -3,6 +3,7 @@ import { apiService } from '../services/api';
 import type { Transaction, Portfolio, Stock } from '../services/api';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
+import { EditTransactionModal } from '../components/EditTransactionModal';
 import { ToastContainer } from '../components/ToastContainer';
 import { useToast } from '../hooks/useToast';
 import './Transactions.css';
@@ -22,6 +23,8 @@ export const Transactions: React.FC = () => {
   });
   const [currentPosition, setCurrentPosition] = useState<number | null>(null);
   const [positionLoading, setPositionLoading] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { toasts, showSuccess, showError, showWarning, removeToast } = useToast();
 
   useEffect(() => {
@@ -116,6 +119,37 @@ export const Transactions: React.FC = () => {
       const errorMessage = error.response?.data?.detail || 'Error creating transaction';
       showError(errorMessage);
     }
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdate = async (
+    id: number,
+    data: {
+      portfolio_id: number;
+      ticker_symbol: string;
+      transaction_type: 'buy' | 'sell';
+      quantity: number;
+      price: number;
+    }
+  ) => {
+    try {
+      await apiService.transactions.update(id, data);
+      showSuccess('Transaction updated successfully!');
+      await loadData();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || 'Error updating transaction';
+      showError(errorMessage);
+      throw error; // Re-throw to let modal handle it
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingTransaction(null);
   };
 
   const handleDelete = async (id: number) => {
@@ -282,13 +316,22 @@ export const Transactions: React.FC = () => {
                   <div className="total-cell">
                     ${(transaction.quantity * transaction.price).toFixed(2)}
                   </div>
-                  <div>
+                  <div className="transaction-actions">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(transaction)}
+                      title="Edit transaction"
+                    >
+                      ✏️
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(transaction.id)}
+                      title="Delete transaction"
                     >
-                      Delete
+                      🗑️
                     </Button>
                   </div>
                 </div>
@@ -296,6 +339,15 @@ export const Transactions: React.FC = () => {
             </div>
           </Card>
         )}
+
+        <EditTransactionModal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          transaction={editingTransaction}
+          portfolios={portfolios}
+          stocks={stocks}
+          onUpdate={handleUpdate}
+        />
       </div>
     </div>
   );
