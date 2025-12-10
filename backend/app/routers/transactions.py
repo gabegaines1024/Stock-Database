@@ -5,6 +5,7 @@ from app.dependencies import get_current_user
 from app.models.model import User
 from app.schemas import TransactionBase, Transaction, TransactionUpdate
 from app.crud import create_transaction, get_transaction, update_transaction, delete_transaction, list_transactions
+from app.services.transaction_service import get_current_position
 from typing import List
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
@@ -17,6 +18,20 @@ def create_transaction_route(
 ) -> Transaction:
     """Create a new transaction (portfolio must belong to authenticated user)."""
     try:
+        # If transaction type is SELL, check if sufficient holdings exist
+        if transaction.transaction_type.lower() == "sell":
+            current_position = get_current_position(
+                portfolio_id=transaction.portfolio_id,
+                ticker=transaction.ticker_symbol,
+                db=db
+            )
+            
+            if transaction.quantity > current_position:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Insufficient holdings for this sell transaction."
+                )
+        
         return create_transaction(db, transaction, current_user.id)
     except HTTPException as e:
         raise e
