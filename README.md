@@ -46,10 +46,10 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-**Note:** If you encounter SSL certificate errors when installing `slowapi`, use:
+**Note:** If you encounter SSL certificate errors during installation, use:
 
 ```bash
-pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org slowapi
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
 ```
 
 #### Configure Environment Variables
@@ -313,6 +313,9 @@ npm run preview
 
 **Problem:** Rate limiting not working
 - **Solution:** Ensure `slowapi` is installed: `pip install slowapi`
+
+**Problem:** `RuntimeError: Form data requires "python-multipart" to be installed`
+- **Solution:** Install the missing package: `pip install python-multipart`
 
 ### Frontend Issues
 

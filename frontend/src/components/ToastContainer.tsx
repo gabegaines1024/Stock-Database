@@ -1,5 +1,6 @@
 import React from 'react';
-import { Toast, ToastType } from './Toast';
+import { Toast } from './Toast';
+import type { ToastType } from './Toast';
 import './ToastContainer.css';
 
 export interface ToastData {
