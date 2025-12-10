@@ -105,6 +105,26 @@
   font-size: 1.25rem;
 }
 
+.position-info {
+  margin-top: var(--spacing-xs);
+  font-size: 0.875rem;
+}
+
+.position-available {
+  color: var(--accent-teal);
+  font-weight: 500;
+}
+
+.position-loading {
+  color: var(--storm-cloud);
+  font-style: italic;
+}
+
+.position-error {
+  color: var(--accent-red);
+  font-weight: 600;
+}
+
 @media (max-width: 1200px) {
   .table-header,
   .table-row {

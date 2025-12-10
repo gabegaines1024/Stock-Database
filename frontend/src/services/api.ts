@@ -153,6 +153,10 @@ export const apiService = {
     create: (data: TransactionBase) => api.post<Transaction>('/transactions', data),
     update: (id: number, data: Partial<TransactionBase>) => api.put<Transaction>(`/transactions/${id}`, data),
     delete: (id: number) => api.delete<Transaction>(`/transactions/${id}`),
+    getPosition: (portfolioId: number, ticker: string) => 
+      api.get<{ portfolio_id: number; ticker: string; position: number }>(
+        `/transactions/position/${portfolioId}/${ticker}`
+      ),
   },
 };
 

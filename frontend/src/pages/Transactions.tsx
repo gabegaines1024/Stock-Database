@@ -3,6 +3,8 @@ import { apiService } from '../services/api';
 import type { Transaction, Portfolio, Stock } from '../services/api';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
+import { ToastContainer } from '../components/ToastContainer';
+import { useToast } from '../hooks/useToast';
 import './Transactions.css';
 
 export const Transactions: React.FC = () => {
@@ -18,10 +20,43 @@ export const Transactions: React.FC = () => {
     quantity: 0,
     price: 0,
   });
+  const [currentPosition, setCurrentPosition] = useState<number | null>(null);
+  const [positionLoading, setPositionLoading] = useState(false);
+  const { toasts, showSuccess, showError, showWarning, removeToast } = useToast();
 
   useEffect(() => {
     loadData();
   }, []);
+
+  // Fetch position when transaction type is "sell" and portfolio/ticker are selected
+  useEffect(() => {
+    const fetchPosition = async () => {
+      if (
+        formData.transaction_type === 'sell' &&
+        formData.portfolio_id &&
+        formData.ticker_symbol
+      ) {
+        setPositionLoading(true);
+        try {
+          const response = await apiService.transactions.getPosition(
+            formData.portfolio_id,
+            formData.ticker_symbol
+          );
+          setCurrentPosition(response.data.position);
+        } catch (error: any) {
+          // If position fetch fails, set to 0 (likely no holdings)
+          setCurrentPosition(0);
+          console.error('Error fetching position:', error);
+        } finally {
+          setPositionLoading(false);
+        }
+      } else {
+        setCurrentPosition(null);
+      }
+    };
+
+    fetchPosition();
+  }, [formData.transaction_type, formData.portfolio_id, formData.ticker_symbol]);
 
   const loadData = async () => {
     try {
@@ -48,8 +83,25 @@ export const Transactions: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Client-side validation for sell transactions
+    if (formData.transaction_type === 'sell') {
+      if (currentPosition === null) {
+        showError('Unable to verify available holdings. Please try again.');
+        return;
+      }
+      
+      if (formData.quantity > currentPosition) {
+        showError(
+          `Insufficient holdings. You can only sell ${currentPosition} shares, but you're trying to sell ${formData.quantity}.`
+        );
+        return;
+      }
+    }
+
     try {
       await apiService.transactions.create(formData);
+      showSuccess('Transaction created successfully!');
       await loadData();
       setShowForm(false);
       setFormData({
@@ -59,18 +111,21 @@ export const Transactions: React.FC = () => {
         quantity: 0,
         price: 0,
       });
+      setCurrentPosition(null);
     } catch (error: any) {
-      alert(error.response?.data?.detail || 'Error creating transaction');
+      const errorMessage = error.response?.data?.detail || 'Error creating transaction';
+      showError(errorMessage);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this transaction?')) return;
+    if (!window.confirm('Are you sure you want to delete this transaction?')) return;
     try {
       await apiService.transactions.delete(id);
+      showSuccess('Transaction deleted successfully!');
       await loadData();
     } catch (error: any) {
-      alert(error.response?.data?.detail || 'Error deleting transaction');
+      showError(error.response?.data?.detail || 'Error deleting transaction');
     }
   };
 
@@ -86,6 +141,7 @@ export const Transactions: React.FC = () => {
 
   return (
     <div className="transactions">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
       <div className="container">
         <div className="page-header slide-up">
           <h1>Transactions</h1>
@@ -151,9 +207,30 @@ export const Transactions: React.FC = () => {
                     step="0.01"
                     min="0"
                     value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
+                    onBlur={() => {
+                      // Validate on blur for sell transactions
+                      if (formData.transaction_type === 'sell' && currentPosition !== null) {
+                        if (formData.quantity > currentPosition) {
+                          showWarning(
+                            `You're trying to sell ${formData.quantity} shares, but you only have ${currentPosition} available.`
+                          );
+                        }
+                      }
+                    }}
                     required
                   />
+                  {formData.transaction_type === 'sell' && currentPosition !== null && (
+                    <div className="position-info">
+                      {positionLoading ? (
+                        <span className="position-loading">Loading position...</span>
+                      ) : (
+                        <span className={`position-available ${formData.quantity > currentPosition ? 'position-error' : ''}`}>
+                          Available to sell: {currentPosition}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Price</label>

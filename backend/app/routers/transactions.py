@@ -65,6 +65,31 @@ def list_transactions_route(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get("/position/{portfolio_id}/{ticker}")
+def get_position_route(
+    portfolio_id: int,
+    ticker: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> dict:
+    """Get the current position (available quantity) for a portfolio and ticker."""
+    try:
+        # Verify portfolio belongs to user
+        from app.models.model import Portfolio
+        portfolio = db.query(Portfolio).filter(
+            Portfolio.id == portfolio_id,
+            Portfolio.user_id == current_user.id
+        ).first()
+        if not portfolio:
+            raise HTTPException(status_code=404, detail="Portfolio not found")
+        
+        position = get_current_position(portfolio_id=portfolio_id, ticker=ticker, db=db)
+        return {"portfolio_id": portfolio_id, "ticker": ticker.upper(), "position": position}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.put("/{transaction_id}", response_model=Transaction)
 def update_transaction_route(
     transaction_id: int,
