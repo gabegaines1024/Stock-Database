@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import cast
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from app.database import get_db
 from app.schemas.schemas import Token, UserCreate, User
 from app.models.model import User as UserModel
@@ -11,6 +13,7 @@ from app.crud import create_user
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
@@ -48,11 +51,13 @@ def register_user(
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("5/minute")  # Limit to 5 login attempts per minute to prevent brute force
 def login_for_access_token(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ) -> Token:
-    """Authenticate user and return access token (OAuth2 password flow)."""
+    """Authenticate user and return access token (rate limited to prevent brute force attacks)."""
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(

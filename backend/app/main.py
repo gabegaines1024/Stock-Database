@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import json
@@ -6,6 +6,9 @@ import json
 # Database imports
 from app.database.database import engine, SessionLocal
 from app.models.model import Base
+
+# Config imports
+from app.config import settings
 
 # Router imports
 from app.routers import users, portfolios, transactions, stocks, auth
@@ -16,8 +19,16 @@ from app.api_client.api_client import StockAPIClient
 # WebSocket manager
 from app.websocket_manager import manager
 
+# Rate limiting
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 # Create all tables in the database
 Base.metadata.create_all(bind=engine)
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="Stock Portfolio API",
@@ -25,10 +36,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS for future frontend integration
+# Add rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Add CORS middleware - restrict to frontend URL for security
+# In production, only allow requests from the configured frontend URL
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
