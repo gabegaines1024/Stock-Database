@@ -21,6 +21,7 @@ from app.crud.crud import (
     # User CRUD
     create_user,
     get_user,
+    get_user_by_id,
     list_users,
 )
 
@@ -47,6 +48,7 @@ __all__ = [
     # User CRUD
     "create_user",
     "get_user",
+    "get_user_by_id",
     "list_users",
 ]
 

@@ -263,8 +263,16 @@ def create_user(db: Session, user: UserCreate) -> User:
 
 
 def get_user(db: Session, username: str) -> User:
-    """Retrieve a user by its primary identifier."""
+    """Retrieve a user by username."""
     db_user = db.query(User).filter(User.username == username).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
+
+
+def get_user_by_id(db: Session, user_id: int) -> User:
+    """Retrieve a user by its primary identifier (ID)."""
+    db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user

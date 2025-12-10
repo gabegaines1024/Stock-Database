@@ -3,6 +3,9 @@ import { apiService } from '../services/api';
 import type { Portfolio } from '../services/api';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
+import { EditPortfolioModal } from '../components/EditPortfolioModal';
+import { ToastContainer } from '../components/ToastContainer';
+import { useToast } from '../hooks/useToast';
 import './Portfolios.css';
 
 export const Portfolios: React.FC = () => {
@@ -10,6 +13,9 @@ export const Portfolios: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '' });
+  const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { toasts, showSuccess, showError, removeToast } = useToast();
 
   useEffect(() => {
     loadData();
@@ -30,23 +36,47 @@ export const Portfolios: React.FC = () => {
     e.preventDefault();
     try {
       await apiService.portfolios.create(formData);
+      showSuccess('Portfolio created successfully!');
       await loadData();
       setShowForm(false);
       setFormData({ name: '' });
     } catch (error: unknown) {
       const err = error as { response?: { data?: { detail?: string } } };
-      alert(err.response?.data?.detail || 'Error creating portfolio');
+      showError(err.response?.data?.detail || 'Error creating portfolio');
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this portfolio?')) return;
+  const handleEdit = (portfolio: Portfolio) => {
+    setEditingPortfolio(portfolio);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdate = async (id: number, name: string) => {
     try {
-      await apiService.portfolios.delete(id);
+      await apiService.portfolios.update(id, { name });
+      showSuccess('Portfolio updated successfully!');
       await loadData();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { detail?: string } } };
-      alert(err.response?.data?.detail || 'Error deleting portfolio');
+      showError(err.response?.data?.detail || 'Error updating portfolio');
+      throw error; // Re-throw to let modal handle it
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingPortfolio(null);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this portfolio?')) return;
+    try {
+      await apiService.portfolios.delete(id);
+      showSuccess('Portfolio deleted successfully!');
+      await loadData();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
+      showError(err.response?.data?.detail || 'Error deleting portfolio');
     }
   };
 
@@ -62,6 +92,7 @@ export const Portfolios: React.FC = () => {
 
   return (
     <div className="portfolios">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
       <div className="container">
         <div className="page-header slide-up">
           <h1>Portfolios</h1>
@@ -103,13 +134,24 @@ export const Portfolios: React.FC = () => {
               <Card key={portfolio.id} hover className="portfolio-card fade-in">
                 <div className="portfolio-header">
                   <h3 className="portfolio-name">{portfolio.name}</h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(portfolio.id)}
-                  >
-                    🗑️
-                  </Button>
+                  <div className="portfolio-actions">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(portfolio)}
+                      title="Edit portfolio"
+                    >
+                      ✏️
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(portfolio.id)}
+                      title="Delete portfolio"
+                    >
+                      🗑️
+                    </Button>
+                  </div>
                 </div>
                 <div className="portfolio-info">
                   <div className="info-item">
@@ -123,6 +165,13 @@ export const Portfolios: React.FC = () => {
             ))}
           </div>
         )}
+
+        <EditPortfolioModal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          portfolio={editingPortfolio}
+          onUpdate={handleUpdate}
+        />
       </div>
     </div>
   );
