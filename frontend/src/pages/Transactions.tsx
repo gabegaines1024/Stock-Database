@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { apiService } from '../services/api';
 import type { Transaction, Portfolio, Stock } from '../services/api';
 import { Card } from '../components/Card';
@@ -23,6 +23,9 @@ export const Transactions: React.FC = () => {
   });
   const [currentPosition, setCurrentPosition] = useState<number | null>(null);
   const [positionLoading, setPositionLoading] = useState(false);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [tickerValid, setTickerValid] = useState<boolean | null>(null);
+  const [companyName, setCompanyName] = useState<string>('');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { toasts, showSuccess, showError, showWarning, removeToast } = useToast();
@@ -37,7 +40,8 @@ export const Transactions: React.FC = () => {
       if (
         formData.transaction_type === 'sell' &&
         formData.portfolio_id &&
-        formData.ticker_symbol
+        formData.ticker_symbol &&
+        tickerValid
       ) {
         setPositionLoading(true);
         try {
@@ -47,7 +51,6 @@ export const Transactions: React.FC = () => {
           );
           setCurrentPosition(response.data.position);
         } catch (error: any) {
-          // If position fetch fails, set to 0 (likely no holdings)
           setCurrentPosition(0);
           console.error('Error fetching position:', error);
         } finally {
@@ -59,7 +62,64 @@ export const Transactions: React.FC = () => {
     };
 
     fetchPosition();
-  }, [formData.transaction_type, formData.portfolio_id, formData.ticker_symbol]);
+  }, [formData.transaction_type, formData.portfolio_id, formData.ticker_symbol, tickerValid]);
+
+  // Debounced price fetch when ticker changes
+  useEffect(() => {
+    const ticker = formData.ticker_symbol.trim().toUpperCase();
+    if (ticker.length < 1) {
+      setTickerValid(null);
+      setCompanyName('');
+      setFormData(prev => ({ ...prev, price: 0 }));
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      await fetchPrice(ticker);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.ticker_symbol]);
+
+  const fetchPrice = async (ticker: string) => {
+    setPriceLoading(true);
+    setTickerValid(null);
+    
+    try {
+      // Try to get the price
+      const priceResponse = await apiService.stocks.getPrice(ticker);
+      setFormData(prev => ({ ...prev, price: priceResponse.data.price }));
+      setTickerValid(true);
+      
+      // Check if stock exists in our database, if not try to get info
+      const existingStock = stocks.find(s => s.ticker_symbol.toUpperCase() === ticker);
+      if (existingStock) {
+        setCompanyName(existingStock.company_name);
+      } else {
+        // Try to search for company name
+        try {
+          const searchResponse = await apiService.stocks.search(ticker);
+          const match = searchResponse.data.results?.find(
+            r => r['1. symbol'].toUpperCase() === ticker
+          );
+          if (match) {
+            setCompanyName(match['2. name']);
+          } else {
+            setCompanyName(ticker); // Use ticker as fallback
+          }
+        } catch {
+          setCompanyName(ticker);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching price:', error);
+      setTickerValid(false);
+      setFormData(prev => ({ ...prev, price: 0 }));
+      setCompanyName('');
+    } finally {
+      setPriceLoading(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -72,12 +132,9 @@ export const Transactions: React.FC = () => {
       setPortfolios(portfoliosRes.data);
       setStocks(stocksRes.data);
       
-      // Update form data with both values in a single setState call
-      // to avoid race conditions
       setFormData(prev => ({
         ...prev,
         portfolio_id: portfoliosRes.data.length > 0 ? portfoliosRes.data[0].id : prev.portfolio_id,
-        ticker_symbol: stocksRes.data.length > 0 ? stocksRes.data[0].ticker_symbol : prev.ticker_symbol,
       }));
     } catch (error) {
       console.error('Error loading data:', error);
@@ -86,9 +143,42 @@ export const Transactions: React.FC = () => {
     }
   };
 
+  const ensureStockExists = async (ticker: string, name: string): Promise<boolean> => {
+    const existingStock = stocks.find(s => s.ticker_symbol.toUpperCase() === ticker.toUpperCase());
+    if (existingStock) {
+      return true;
+    }
+
+    // Create the stock
+    try {
+      await apiService.stocks.create({
+        ticker_symbol: ticker.toUpperCase(),
+        company_name: name || ticker,
+      });
+      return true;
+    } catch (error: any) {
+      // Stock might already exist (race condition) - that's ok
+      if (error.response?.status === 409 || error.response?.data?.detail?.includes('already exists')) {
+        return true;
+      }
+      console.error('Error creating stock:', error);
+      return false;
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!tickerValid) {
+      showError('Please enter a valid ticker symbol');
+      return;
+    }
+
+    if (formData.price <= 0) {
+      showError('Unable to get price for this ticker. Please try again.');
+      return;
+    }
+
     // Client-side validation for sell transactions
     if (formData.transaction_type === 'sell') {
       if (currentPosition === null) {
@@ -105,13 +195,26 @@ export const Transactions: React.FC = () => {
     }
 
     try {
-      await apiService.transactions.create(formData);
+      // Ensure stock exists in database before creating transaction
+      const ticker = formData.ticker_symbol.trim().toUpperCase();
+      const stockCreated = await ensureStockExists(ticker, companyName);
+      if (!stockCreated) {
+        showError('Failed to register stock. Please try again.');
+        return;
+      }
+
+      await apiService.transactions.create({
+        ...formData,
+        ticker_symbol: ticker,
+      });
       showSuccess('Transaction created successfully!');
       setShowForm(false);
       setCurrentPosition(null);
-      // Reset form but keep current portfolio selection
+      setTickerValid(null);
+      setCompanyName('');
       setFormData(prev => ({
         ...prev,
+        ticker_symbol: '',
         transaction_type: 'buy',
         quantity: 0,
         price: 0,
@@ -145,7 +248,7 @@ export const Transactions: React.FC = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || 'Error updating transaction';
       showError(errorMessage);
-      throw error; // Re-throw to let modal handle it
+      throw error;
     }
   };
 
@@ -211,17 +314,23 @@ export const Transactions: React.FC = () => {
                 </div>
                 <div className="form-group">
                   <label>Ticker Symbol</label>
-                  <select
+                  <input
+                    type="text"
+                    placeholder="Enter ticker (e.g., AAPL, GOOGL)"
                     value={formData.ticker_symbol}
-                    onChange={(e) => setFormData({ ...formData, ticker_symbol: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, ticker_symbol: e.target.value.toUpperCase() })}
+                    className={tickerValid === false ? 'input-error' : tickerValid === true ? 'input-valid' : ''}
                     required
-                  >
-                    {stocks.map((stock) => (
-                      <option key={stock.id} value={stock.ticker_symbol}>
-                        {stock.ticker_symbol} - {stock.company_name}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  {priceLoading && (
+                    <div className="ticker-status loading">Looking up ticker...</div>
+                  )}
+                  {!priceLoading && tickerValid === true && companyName && (
+                    <div className="ticker-status valid">✓ {companyName}</div>
+                  )}
+                  {!priceLoading && tickerValid === false && (
+                    <div className="ticker-status invalid">✗ Invalid ticker symbol</div>
+                  )}
                 </div>
               </div>
               <div className="form-row">
@@ -241,11 +350,10 @@ export const Transactions: React.FC = () => {
                   <input
                     type="number"
                     step="0.01"
-                    min="0"
-                    value={formData.quantity}
+                    min="0.01"
+                    value={formData.quantity || ''}
                     onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
                     onBlur={() => {
-                      // Validate on blur for sell transactions
                       if (formData.transaction_type === 'sell' && currentPosition !== null) {
                         if (formData.quantity > currentPosition) {
                           showWarning(
@@ -254,6 +362,7 @@ export const Transactions: React.FC = () => {
                         }
                       }
                     }}
+                    placeholder="Enter quantity"
                     required
                   />
                   {formData.transaction_type === 'sell' && currentPosition !== null && (
@@ -269,18 +378,30 @@ export const Transactions: React.FC = () => {
                   )}
                 </div>
                 <div className="form-group">
-                  <label>Price</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                    required
-                  />
+                  <label>Price (Auto-fetched)</label>
+                  <div className="price-display-field">
+                    {priceLoading ? (
+                      <span className="price-loading">Fetching...</span>
+                    ) : formData.price > 0 ? (
+                      <span className="price-value">${formData.price.toFixed(2)}</span>
+                    ) : (
+                      <span className="price-placeholder">Enter ticker to get price</span>
+                    )}
+                  </div>
                 </div>
               </div>
-              <Button type="submit" variant="primary">Add Transaction</Button>
+              {formData.quantity > 0 && formData.price > 0 && (
+                <div className="transaction-total">
+                  Total: <strong>${(formData.quantity * formData.price).toFixed(2)}</strong>
+                </div>
+              )}
+              <Button 
+                type="submit" 
+                variant="primary"
+                disabled={!tickerValid || formData.price <= 0 || formData.quantity <= 0}
+              >
+                {formData.transaction_type === 'buy' ? 'Buy Stock' : 'Sell Stock'}
+              </Button>
             </form>
           </Card>
         )}
@@ -306,7 +427,7 @@ export const Transactions: React.FC = () => {
               {transactions.map((transaction) => (
                 <div key={transaction.id} className="table-row">
                   <div>{new Date(transaction.executed_at).toLocaleDateString()}</div>
-                  <div>{transaction.portfolio_id}</div>
+                  <div>{portfolios.find(p => p.id === transaction.portfolio_id)?.name || transaction.portfolio_id}</div>
                   <div className="ticker-cell">{transaction.ticker_symbol}</div>
                   <div>
                     <span className={`transaction-type-badge ${transaction.transaction_type}`}>
@@ -354,4 +475,3 @@ export const Transactions: React.FC = () => {
     </div>
   );
 };
-

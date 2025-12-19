@@ -125,6 +125,80 @@
   font-weight: 600;
 }
 
+/* Ticker input validation states */
+.form-group input.input-valid {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.2);
+}
+
+.form-group input.input-error {
+  border-color: var(--accent-red);
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+}
+
+.ticker-status {
+  margin-top: var(--spacing-xs);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.ticker-status.loading {
+  color: var(--storm-cloud);
+  font-style: italic;
+}
+
+.ticker-status.valid {
+  color: var(--accent-green);
+}
+
+.ticker-status.invalid {
+  color: var(--accent-red);
+}
+
+/* Price display field */
+.price-display-field {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.price-display-field .price-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+}
+
+.price-display-field .price-loading {
+  color: var(--storm-cloud);
+  font-style: italic;
+}
+
+.price-display-field .price-placeholder {
+  color: var(--storm-cloud);
+  font-size: 0.875rem;
+}
+
+/* Transaction total preview */
+.transaction-total {
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(26, 188, 156, 0.1));
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1.125rem;
+  color: var(--storm-white);
+  text-align: center;
+}
+
+.transaction-total strong {
+  color: var(--accent-teal);
+  font-size: 1.5rem;
+  margin-left: var(--spacing-sm);
+}
+
 .transaction-actions {
   display: flex;
   gap: var(--spacing-xs);
