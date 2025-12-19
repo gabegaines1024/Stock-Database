@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.exceptions import AppException
+from slowapi.errors import RateLimitExceeded  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -119,5 +120,34 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
             "message": error_message,
             "path": request.url.path,
         }
+    )
+
+
+async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    """Handle rate limit exceeded exceptions."""
+    logger.warning(
+        f"Rate limit exceeded for {request.client.host if request.client else 'unknown'} on {request.url.path}",
+        extra={
+            "path": request.url.path,
+            "method": request.method,
+            "client": request.client.host if request.client else None,
+        }
+    )
+    
+    # Get retry_after if available
+    retry_after = "60"  # Default to 60 seconds
+    if hasattr(exc, 'retry_after') and exc.retry_after:  # type: ignore
+        retry_after = str(int(exc.retry_after))  # type: ignore
+    
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={
+            "error": True,
+            "error_code": "RATE_LIMIT_EXCEEDED",
+            "message": f"Rate limit exceeded: {exc.detail}",
+            "detail": f"Rate limit exceeded: {exc.detail}",  # For backward compatibility with frontend
+            "path": request.url.path,
+        },
+        headers={"Retry-After": retry_after},
     )
 

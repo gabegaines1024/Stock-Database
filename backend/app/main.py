@@ -22,6 +22,7 @@ from app.error_handlers import (
     http_exception_handler,
     validation_exception_handler,
     general_exception_handler,
+    rate_limit_exception_handler,
 )
 from app.exceptions import AppException
 
@@ -35,7 +36,7 @@ from app.api_client.api_client import StockAPIClient
 from app.websocket_manager import manager
 
 # Rate limiting
-from slowapi import Limiter, _rate_limit_exceeded_handler  # type: ignore
+from slowapi import Limiter  # type: ignore
 from slowapi.util import get_remote_address  # type: ignore
 from slowapi.errors import RateLimitExceeded  # type: ignore
 
@@ -68,7 +69,7 @@ app = FastAPI(
 
 # Add rate limiter to app state
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)  # type: ignore
 
 # Add custom exception handlers
 app.add_exception_handler(AppException, app_exception_handler)  # type: ignore
