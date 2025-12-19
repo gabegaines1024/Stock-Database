@@ -9,6 +9,10 @@ from app.schemas.schemas import (
     PortfolioCreate,
     PortfolioUpdate,
     Portfolio,
+    # Portfolio Analytics schemas
+    StockPosition,
+    PortfolioValue,
+    PortfolioAnalytics,
     # Transaction schemas
     TransactionBase,
     TransactionCreate,
@@ -32,6 +36,10 @@ __all__ = [
     "PortfolioCreate",
     "PortfolioUpdate",
     "Portfolio",
+    # Portfolio Analytics schemas
+    "StockPosition",
+    "PortfolioValue",
+    "PortfolioAnalytics",
     # Transaction schemas
     "TransactionBase",
     "TransactionCreate",

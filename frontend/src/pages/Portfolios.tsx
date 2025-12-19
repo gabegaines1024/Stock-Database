@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiService } from '../services/api';
-import type { Portfolio } from '../services/api';
+import type { Portfolio, PortfolioAnalytics } from '../services/api';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { EditPortfolioModal } from '../components/EditPortfolioModal';
@@ -10,7 +10,9 @@ import './Portfolios.css';
 
 export const Portfolios: React.FC = () => {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [analytics, setAnalytics] = useState<Map<number, PortfolioAnalytics>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [loadingAnalytics, setLoadingAnalytics] = useState<Set<number>>(new Set());
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '' });
   const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
@@ -25,11 +27,40 @@ export const Portfolios: React.FC = () => {
     try {
       const portfoliosRes = await apiService.portfolios.getAll();
       setPortfolios(portfoliosRes.data);
+      
+      // Load analytics for all portfolios
+      await loadAnalytics(portfoliosRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadAnalytics = async (portfolioList: Portfolio[]) => {
+    const analyticsMap = new Map<number, PortfolioAnalytics>();
+    const loadingSet = new Set<number>();
+    
+    // Mark all as loading
+    portfolioList.forEach(p => loadingSet.add(p.id));
+    setLoadingAnalytics(new Set(loadingSet));
+    
+    // Fetch analytics for each portfolio
+    const analyticsPromises = portfolioList.map(async (portfolio) => {
+      try {
+        const analyticsRes = await apiService.portfolios.getAnalytics(portfolio.id);
+        analyticsMap.set(portfolio.id, analyticsRes.data);
+      } catch (error) {
+        console.error(`Error loading analytics for portfolio ${portfolio.id}:`, error);
+        // Continue even if one fails
+      } finally {
+        loadingSet.delete(portfolio.id);
+        setLoadingAnalytics(new Set(loadingSet));
+      }
+    });
+    
+    await Promise.all(analyticsPromises);
+    setAnalytics(analyticsMap);
   };
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -160,6 +191,50 @@ export const Portfolios: React.FC = () => {
                       {new Date(portfolio.created_at).toLocaleDateString()}
                     </span>
                   </div>
+                  {loadingAnalytics.has(portfolio.id) ? (
+                    <div className="info-item">
+                      <span className="info-label">Loading analytics...</span>
+                    </div>
+                  ) : analytics.has(portfolio.id) ? (
+                    <>
+                      {(() => {
+                        const portfolioAnalytics = analytics.get(portfolio.id)!;
+                        const value = portfolioAnalytics.value;
+                        const isPositive = value.total_gain_loss >= 0;
+                        return (
+                          <>
+                            <div className="info-item">
+                              <span className="info-label">Total Value:</span>
+                              <span className="info-value portfolio-value">
+                                ${value.total_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                            <div className="info-item">
+                              <span className="info-label">Cost Basis:</span>
+                              <span className="info-value">
+                                ${value.total_cost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                            <div className="info-item">
+                              <span className="info-label">Gain/Loss:</span>
+                              <span className={`info-value ${isPositive ? 'gain' : 'loss'}`}>
+                                {isPositive ? '+' : ''}${value.total_gain_loss.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {' '}({isPositive ? '+' : ''}{value.gain_loss_percentage.toFixed(2)}%)
+                              </span>
+                            </div>
+                            {portfolioAnalytics.positions.length > 0 && (
+                              <div className="info-item">
+                                <span className="info-label">Positions:</span>
+                                <span className="info-value">
+                                  {portfolioAnalytics.positions.length} stock{portfolioAnalytics.positions.length !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </>
+                  ) : null}
                 </div>
               </Card>
             ))}

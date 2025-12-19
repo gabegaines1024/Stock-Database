@@ -132,3 +132,19 @@
   margin-top: var(--spacing-lg);
 }
 
+.portfolio-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--accent-blue);
+}
+
+.info-value.gain {
+  color: #2ecc71;
+  font-weight: 600;
+}
+
+.info-value.loss {
+  color: #e74c3c;
+  font-weight: 600;
+}
+

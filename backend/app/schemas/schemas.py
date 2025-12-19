@@ -134,3 +134,32 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     """Token payload data schema."""
     username: Optional[str] = None
+
+
+# ============== PORTFOLIO ANALYTICS SCHEMAS ==============
+class StockPosition(BaseModel):
+    """Position details for a single stock in a portfolio."""
+    ticker: str
+    quantity: float
+    average_cost: float
+    current_price: float
+    current_value: float
+    cost_basis: float
+    gain_loss: float
+    gain_loss_percentage: float
+
+
+class PortfolioValue(BaseModel):
+    """Portfolio value and performance metrics."""
+    total_value: float
+    total_cost: float
+    total_gain_loss: float
+    gain_loss_percentage: float
+
+
+class PortfolioAnalytics(BaseModel):
+    """Complete portfolio analytics including value and positions."""
+    portfolio_id: int
+    portfolio_name: str
+    value: PortfolioValue
+    positions: list[StockPosition]

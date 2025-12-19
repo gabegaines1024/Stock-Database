@@ -106,6 +106,31 @@ export interface StockSearchResult {
   }>;
 }
 
+export interface StockPosition {
+  ticker: string;
+  quantity: number;
+  average_cost: number;
+  current_price: number;
+  current_value: number;
+  cost_basis: number;
+  gain_loss: number;
+  gain_loss_percentage: number;
+}
+
+export interface PortfolioValue {
+  total_value: number;
+  total_cost: number;
+  total_gain_loss: number;
+  gain_loss_percentage: number;
+}
+
+export interface PortfolioAnalytics {
+  portfolio_id: number;
+  portfolio_name: string;
+  value: PortfolioValue;
+  positions: StockPosition[];
+}
+
 // API Functions
 export const apiService = {
   // Auth
@@ -144,6 +169,8 @@ export const apiService = {
     create: (data: PortfolioBase) => api.post<Portfolio>('/portfolios', data),
     update: (id: number, data: Partial<PortfolioBase>) => api.put<Portfolio>(`/portfolios/${id}`, data),
     delete: (id: number) => api.delete<Portfolio>(`/portfolios/${id}`),
+    getAnalytics: (id: number) => api.get<PortfolioAnalytics>(`/portfolios/${id}/analytics`),
+    getValue: (id: number) => api.get<PortfolioValue>(`/portfolios/${id}/value`),
   },
 
   // Transactions
