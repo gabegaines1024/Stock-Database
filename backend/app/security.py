@@ -19,8 +19,62 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
-    """Hash a password using bcrypt."""
-    return pwd_context.hash(password)
+    """Hash a password using bcrypt.
+    
+    Bcrypt has a 72-byte limit. This function ensures the password
+    is properly handled and hashes it. If the password exceeds 72 bytes,
+    it will be truncated (though this should be rare for normal passwords).
+    """
+    # Ensure password is a string
+    if not isinstance(password, str):
+        password = str(password)
+    
+    # Check byte length (bcrypt limit is 72 bytes)
+    # This is important because some Unicode characters can be multiple bytes
+    password_bytes = password.encode('utf-8')
+    byte_length = len(password_bytes)
+    
+    # If password exceeds 72 bytes, truncate it
+    # (This handles edge cases with very long passwords or special Unicode)
+    if byte_length > 72:
+        # Truncate to 72 bytes, handling UTF-8 character boundaries
+        truncated_bytes = password_bytes[:72]
+        # Try to decode, if it fails, remove the last incomplete character
+        try:
+            password = truncated_bytes.decode('utf-8')
+        except UnicodeDecodeError:
+            # Remove bytes from the end until we can decode
+            for i in range(72, max(0, 72 - 4), -1):
+                try:
+                    password = password_bytes[:i].decode('utf-8')
+                    break
+                except UnicodeDecodeError:
+                    continue
+            else:
+                # Fallback: decode with error handling
+                password = password_bytes[:72].decode('utf-8', errors='ignore')
+        
+        # Log a warning
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            f"Password truncated from {byte_length} bytes to 72 bytes "
+            f"(bcrypt limit). Original length: {len(password)} characters."
+        )
+    
+    # Hash the password using passlib
+    # Passlib should handle this, but we've pre-truncated to avoid errors
+    try:
+        return pwd_context.hash(password)
+    except ValueError as e:
+        # If we still get an error, provide a helpful message
+        error_msg = str(e)
+        if "72 bytes" in error_msg or "truncate" in error_msg.lower():
+            raise ValueError(
+                f"Password encoding issue: {error_msg}. "
+                f"Please try a different password or contact support."
+            ) from e
+        raise
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

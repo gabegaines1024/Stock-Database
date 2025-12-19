@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.models import User, Stock, Portfolio, Transaction
 from app.schemas import StockCreate, StockUpdate, PortfolioCreate, PortfolioUpdate, TransactionCreate, TransactionUpdate, UserCreate, UserUpdate
 from app.security import hash_password
-from app.exceptions import NotFoundError, ConflictError, DatabaseError
+from app.exceptions import NotFoundError, ConflictError, DatabaseError, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -261,7 +261,12 @@ def create_user(db: Session, user: UserCreate) -> User:
         raise ConflictError("Email already registered", "EMAIL_EXISTS")
     
     # Hash the password before storing
-    hashed_password_str = hash_password(user.password)
+    try:
+        hashed_password_str = hash_password(user.password)
+    except ValueError as e:
+        # Re-raise password validation errors with better context
+        logger.error(f"Password hashing failed for user {user.username}: {str(e)}")
+        raise ValidationError(str(e), "PASSWORD_TOO_LONG") from e
     
     db_user = User(
         email=user.email,
