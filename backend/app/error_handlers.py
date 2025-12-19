@@ -28,6 +28,7 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
             "error": True,
             "error_code": exc.error_code,
             "message": exc.detail,
+            "detail": exc.detail,  # For backward compatibility with frontend
             "path": request.url.path,
         }
     )
@@ -50,6 +51,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
             "error": True,
             "error_code": "HTTP_EXCEPTION",
             "message": exc.detail,
+            "detail": exc.detail,  # For backward compatibility with frontend
             "path": request.url.path,
         }
     )
@@ -82,6 +84,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "error": True,
             "error_code": "VALIDATION_ERROR",
             "message": "Request validation failed",
+            "detail": detail,  # For backward compatibility with frontend
             "details": error_messages,
             "path": request.url.path,
         }
