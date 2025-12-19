@@ -43,11 +43,12 @@ class Portfolio(Base):
     __tablename__ = "portfolios"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)  # ← Add ForeignKey!
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     name: Mapped[str] = mapped_column(String(255), default="My Portfolio")
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now, nullable=False)
     
     # Relationships
-    user: Mapped["User"] = relationship(back_populates="portfolios")  # ← Add this!
+    user: Mapped["User"] = relationship(back_populates="portfolios")
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="portfolio")
 
 
