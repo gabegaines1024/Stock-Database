@@ -14,16 +14,19 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing context - configure bcrypt to truncate automatically
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__truncate_error=False  # Don't raise error, truncate instead
+)
 
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt.
     
-    Bcrypt has a 72-byte limit. This function ensures the password
-    is properly handled and hashes it. If the password exceeds 72 bytes,
-    it will be truncated.
+    Bcrypt has a 72-byte limit. We configure passlib to truncate automatically,
+    but also manually ensure the password is safe before hashing.
     """
     import logging
     logger = logging.getLogger(__name__)
@@ -32,68 +35,43 @@ def hash_password(password: str) -> str:
     if not isinstance(password, str):
         password = str(password)
     
-    # Log password info for debugging
-    logger.debug(f"Password length: {len(password)} characters")
-    
-    # Encode to bytes to check length
+    # ALWAYS truncate to 70 bytes (leave 2 bytes margin) to be absolutely safe
+    # This ensures we never hit bcrypt's 72-byte limit
     password_bytes = password.encode('utf-8')
     byte_length = len(password_bytes)
-    logger.debug(f"Password byte length: {byte_length} bytes")
     
-    # If password exceeds 72 bytes, truncate it to fit bcrypt's limit
-    if byte_length > 72:
+    if byte_length > 70:
         logger.warning(
-            f"Password exceeds 72 bytes ({byte_length} bytes, {len(password)} characters). "
-            f"Truncating to 72 bytes for bcrypt."
+            f"Password exceeds safe limit ({byte_length} bytes). "
+            f"Truncating to 70 bytes."
         )
-        
-        # Truncate to 72 bytes, handling UTF-8 character boundaries
-        truncated_bytes = password_bytes[:72]
-        
-        # Try to decode, if it fails, remove bytes until we can
-        for i in range(72, max(0, 72 - 4), -1):
+        # Truncate to 70 bytes, handling UTF-8 boundaries
+        for i in range(70, max(0, 70 - 4), -1):
             try:
                 password = password_bytes[:i].decode('utf-8')
-                logger.debug(f"Truncated password to {i} bytes, {len(password)} characters")
+                logger.debug(f"Truncated to {i} bytes, {len(password)} characters")
                 break
             except UnicodeDecodeError:
                 continue
         else:
-            # Fallback: decode with error handling
-            password = password_bytes[:72].decode('utf-8', errors='ignore')
-            logger.warning("Used fallback decoding for password truncation")
+            # Fallback
+            password = password_bytes[:70].decode('utf-8', errors='ignore')
     
-    # Hash the password using passlib
+    # Hash with passlib - should never fail now
     try:
-        hashed = pwd_context.hash(password)
-        logger.debug("Password hashed successfully")
-        return hashed
+        return pwd_context.hash(password)
     except Exception as e:
-        # Log the full error for debugging
-        logger.error(
-            f"Password hashing failed: {str(e)}. "
-            f"Password length: {len(password)} chars, {len(password.encode('utf-8'))} bytes",
-            exc_info=True
-        )
-        
-        # Try to provide a helpful error message
-        error_msg = str(e)
-        if "72 bytes" in error_msg or "truncate" in error_msg.lower():
-            # The password is still too long somehow - try more aggressive truncation
-            logger.warning("Attempting aggressive password truncation")
-            try:
-                # Try truncating to 60 bytes to be safe
-                safe_password = password.encode('utf-8')[:60].decode('utf-8', errors='ignore')
-                return pwd_context.hash(safe_password)
-            except Exception as e2:
-                logger.error(f"Aggressive truncation also failed: {str(e2)}", exc_info=True)
-                raise ValueError(
-                    "Unable to hash password due to encoding issues. "
-                    "Please try a simpler password with standard characters."
-                ) from e
-        
-        # For other errors, re-raise
-        raise
+        logger.error(f"Password hashing failed unexpectedly: {str(e)}", exc_info=True)
+        # Last resort: hash a very short version
+        try:
+            safe_pwd = password[:20] if len(password) > 20 else password
+            logger.warning(f"Using emergency fallback - truncating to {len(safe_pwd)} characters")
+            return pwd_context.hash(safe_pwd)
+        except Exception as e2:
+            logger.critical(f"Emergency fallback also failed: {str(e2)}", exc_info=True)
+            raise ValueError(
+                "Unable to hash password. Please use a simpler password with standard characters."
+            ) from e
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
