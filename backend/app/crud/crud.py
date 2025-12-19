@@ -261,12 +261,7 @@ def create_user(db: Session, user: UserCreate) -> User:
         raise ConflictError("Email already registered", "EMAIL_EXISTS")
     
     # Hash the password before storing
-    try:
-        hashed_password_str = hash_password(user.password)
-    except ValueError as e:
-        # Re-raise password validation errors with better context
-        logger.error(f"Password hashing failed for user {user.username}: {str(e)}")
-        raise ValidationError(str(e), "PASSWORD_TOO_LONG") from e
+    hashed_password_str = hash_password(user.password)
     
     db_user = User(
         email=user.email,
