@@ -71,12 +71,14 @@ export const Transactions: React.FC = () => {
       setTransactions(transactionsRes.data);
       setPortfolios(portfoliosRes.data);
       setStocks(stocksRes.data);
-      if (portfoliosRes.data.length > 0) {
-        setFormData({ ...formData, portfolio_id: portfoliosRes.data[0].id });
-      }
-      if (stocksRes.data.length > 0) {
-        setFormData({ ...formData, ticker_symbol: stocksRes.data[0].ticker_symbol });
-      }
+      
+      // Update form data with both values in a single setState call
+      // to avoid race conditions
+      setFormData(prev => ({
+        ...prev,
+        portfolio_id: portfoliosRes.data.length > 0 ? portfoliosRes.data[0].id : prev.portfolio_id,
+        ticker_symbol: stocksRes.data.length > 0 ? stocksRes.data[0].ticker_symbol : prev.ticker_symbol,
+      }));
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -105,16 +107,16 @@ export const Transactions: React.FC = () => {
     try {
       await apiService.transactions.create(formData);
       showSuccess('Transaction created successfully!');
-      await loadData();
       setShowForm(false);
-      setFormData({
-        portfolio_id: portfolios[0]?.id || 1,
-        ticker_symbol: stocks[0]?.ticker_symbol || '',
+      setCurrentPosition(null);
+      // Reset form but keep current portfolio selection
+      setFormData(prev => ({
+        ...prev,
         transaction_type: 'buy',
         quantity: 0,
         price: 0,
-      });
-      setCurrentPosition(null);
+      }));
+      await loadData();
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || 'Error creating transaction';
       showError(errorMessage);
