@@ -3,8 +3,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import cast
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from slowapi import Limiter  # type: ignore
+from slowapi.util import get_remote_address  # type: ignore
 from app.database import get_db
 from app.schemas.schemas import Token, UserCreate, User
 from app.models.model import User as UserModel

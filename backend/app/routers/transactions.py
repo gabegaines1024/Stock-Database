@@ -3,10 +3,10 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.model import User
-from app.schemas import TransactionBase, Transaction, TransactionUpdate
+from app.schemas import TransactionBase, Transaction, TransactionUpdate, TransactionCreate
 from app.crud import create_transaction, get_transaction, update_transaction, delete_transaction, list_transactions
 from app.services.transaction_service import get_current_position
-from typing import List
+from typing import List, cast
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -32,7 +32,9 @@ def create_transaction_route(
                     detail="Insufficient holdings for this sell transaction."
                 )
         
-        return create_transaction(db, transaction, current_user.id)
+        transaction_create = TransactionCreate(**transaction.model_dump())
+        created = create_transaction(db, transaction_create, current_user.id)
+        return cast(Transaction, created)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -46,7 +48,8 @@ def get_transaction_route(
 ) -> Transaction:
     """Get a transaction by its primary identifier (must belong to authenticated user's portfolio)."""
     try:
-        return get_transaction(db, transaction_id, current_user.id)
+        transaction = get_transaction(db, transaction_id, current_user.id)
+        return cast(Transaction, transaction)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -59,7 +62,8 @@ def list_transactions_route(
 ) -> List[Transaction]:
     """List all transactions for the authenticated user's portfolios."""
     try:
-        return list_transactions(db, current_user.id)
+        transactions = list_transactions(db, current_user.id)
+        return cast(List[Transaction], transactions)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -99,7 +103,8 @@ def update_transaction_route(
 ) -> Transaction:
     """Update a transaction by its primary identifier (must belong to authenticated user's portfolio)."""
     try:
-        return update_transaction(db, transaction_id, transaction, current_user.id)
+        updated = update_transaction(db, transaction_id, transaction, current_user.id)
+        return cast(Transaction, updated)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -115,7 +120,7 @@ def delete_transaction_route(
     try:
         transaction = get_transaction(db, transaction_id, current_user.id)
         delete_transaction(db, transaction_id, current_user.id)
-        return transaction
+        return cast(Transaction, transaction)
     except HTTPException as e:
         raise e
     except Exception as e:

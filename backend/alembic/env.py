@@ -5,7 +5,7 @@ from pathlib import Path
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from alembic import context
+from alembic import context  # type: ignore
 
 # Add the backend directory to sys.path so we can import from app
 backend_dir = Path(__file__).resolve().parent.parent

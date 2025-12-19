@@ -5,7 +5,7 @@ from app.dependencies import get_current_user
 from app.models.model import User as UserModel
 from app.schemas import UserCreate, User, UserUpdate
 from app.crud import create_user, get_user, get_user_by_id, list_users
-from typing import List
+from typing import List, cast
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -17,7 +17,8 @@ def create_user_route(
 ) -> User:
     """Create a new user (requires authentication)."""
     try:
-        return create_user(db, user)
+        new_user = create_user(db, user)
+        return cast(User, new_user)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -31,7 +32,8 @@ def get_user_route(
 ) -> User:
     """Get a user by its primary identifier (requires authentication)."""
     try:
-        return get_user_by_id(db, user_id)
+        user = get_user_by_id(db, user_id)
+        return cast(User, user)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -44,7 +46,8 @@ def list_users_route(
 ) -> List[User]:
     """List all users (requires authentication)."""
     try:
-        return list_users(db)
+        users = list_users(db)
+        return cast(List[User], users)
     except HTTPException as e:
         raise e
     except Exception as e:

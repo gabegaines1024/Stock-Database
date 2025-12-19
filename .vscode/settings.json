@@ -7,5 +7,12 @@
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true,
     "python.analysis.diagnosticMode": "workspace",
-    "python.terminal.activateEnvironment": true
+    "python.terminal.activateEnvironment": true,
+    "cursorpyright.analysis.autoImportCompletions": true,
+    "cursorpyright.analysis.diagnosticMode": "workspace",
+    "cursorpyright.analysis.extraPaths": [
+        "${workspaceFolder}/backend",
+        "${workspaceFolder}/backend/.venv/lib/python3.12/site-packages"
+    ],
+    "cursorpyright.analysis.typeCheckingMode": "basic"
 }

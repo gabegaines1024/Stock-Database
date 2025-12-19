@@ -6,7 +6,7 @@ from app.dependencies import get_current_user
 from app.models.model import User
 from app.schemas import StockBase, Stock, StockUpdate
 from app.crud import create_stock, get_stock, update_stock, delete_stock, list_stocks
-from typing import List
+from typing import List, cast
 router = APIRouter(prefix="/stocks", tags=["stocks"])
 
 @router.post("/", response_model=Stock)
@@ -17,8 +17,8 @@ def create_stock_route(
 ) -> Stock:
     """Create a new stock (requires authentication)."""
     try:
-        new_stock = create_stock(db, stock)
-        return new_stock
+        new_stock = create_stock(db, StockCreate(**stock.model_dump()))
+        return cast(Stock, new_stock)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -28,17 +28,19 @@ def create_stock_route(
 def get_stock_route(stock_id: int, db: Session = Depends(get_db)) -> Stock:
     """Get a stock by its primary identifier."""
     try:
-        return get_stock(db, stock_id)
+        stock = get_stock(db, stock_id)
+        return cast(Stock, stock)
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/", response_model=List[Stock])
-def list_stocks_route(db: Session = Depends(get_db)) -> list[Stock]:
+def list_stocks_route(db: Session = Depends(get_db)) -> List[Stock]:
     """List all stocks."""
     try:
-        return list_stocks(db)
+        stocks = list_stocks(db)
+        return cast(List[Stock], stocks)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -48,7 +50,8 @@ def list_stocks_route(db: Session = Depends(get_db)) -> list[Stock]:
 def update_stock_route(stock_id: int, stock: StockUpdate, db: Session = Depends(get_db)) -> Stock:
     """Update a stock by its primary identifier."""
     try:
-        return update_stock(db, stock_id, stock)
+        updated_stock = update_stock(db, stock_id, stock)
+        return cast(Stock, updated_stock)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -60,7 +63,7 @@ def delete_stock_route(stock_id: int, db: Session = Depends(get_db)) -> Stock:
     try:
         stock = get_stock(db, stock_id)
         delete_stock(db, stock_id)
-        return stock
+        return cast(Stock, stock)
     except HTTPException as e:
         raise e
     except Exception as e:

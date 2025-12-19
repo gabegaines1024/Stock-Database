@@ -60,6 +60,15 @@ frontend/.vite/
 backend/stock-tracker.db
 backend/__pycache__/
 backend/**/__pycache__/
+backend/venv/
+backend/.venv/
+backend/uv.lock
+
+# Root level cache (shouldn't exist but just in case)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
 # Logs
 *.log
