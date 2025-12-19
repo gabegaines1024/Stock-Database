@@ -17,6 +17,9 @@ if str(backend_dir) not in sys.path:
 # Change to backend directory to ensure relative paths work
 os.chdir(backend_dir)
 
+# Set PYTHONPATH environment variable for subprocesses
+os.environ["PYTHONPATH"] = str(backend_dir)
+
 import uvicorn
 
 if __name__ == "__main__":
@@ -26,5 +29,6 @@ if __name__ == "__main__":
         port=8000,
         reload=True,
         reload_dirs=[str(backend_dir / "app")],
+        reload_includes=["*.py"],
     )
 

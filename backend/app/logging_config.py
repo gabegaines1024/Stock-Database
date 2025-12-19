@@ -6,6 +6,7 @@ from logging.handlers import RotatingFileHandler
 from typing import Optional
 
 # Create logs directory if it doesn't exist
+# Get the backend directory (parent of app directory)
 LOG_DIR = Path(__file__).parent.parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 

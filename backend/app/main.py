@@ -39,14 +39,20 @@ from slowapi import Limiter, _rate_limit_exceeded_handler  # type: ignore
 from slowapi.util import get_remote_address  # type: ignore
 from slowapi.errors import RateLimitExceeded  # type: ignore
 
-# Setup logging
-setup_logging(
-    log_level=settings.log_level,
-    log_to_file=settings.log_to_file,
-    log_to_console=settings.log_to_console
-)
-
-logger = get_logger(__name__)
+# Setup logging (with error handling in case of path issues)
+try:
+    setup_logging(
+        log_level=settings.log_level,
+        log_to_file=settings.log_to_file,
+        log_to_console=settings.log_to_console
+    )
+    logger = get_logger(__name__)
+except Exception as e:
+    # Fallback to basic logging if setup fails
+    import logging as std_logging
+    std_logging.basicConfig(level=std_logging.INFO)
+    logger = std_logging.getLogger(__name__)
+    logger.warning(f"Failed to setup custom logging: {e}. Using basic logging.")
 
 # Create all tables in the database
 Base.metadata.create_all(bind=engine)
