@@ -1,8 +1,11 @@
 import asyncio
 import json
+import logging
 from typing import Dict, Set
 from fastapi import WebSocket, WebSocketDisconnect
 from app.api_client.api_client import StockAPIClient
+
+logger = logging.getLogger(__name__)
 
 
 class ConnectionManager:
@@ -21,6 +24,7 @@ class ConnectionManager:
         """Accept a new WebSocket connection."""
         await websocket.accept()
         self.connection_subscriptions[websocket] = set()
+        logger.info("New WebSocket connection established")
         
     def disconnect(self, websocket: WebSocket):
         """Remove a WebSocket connection and its subscriptions."""
@@ -30,6 +34,7 @@ class ConnectionManager:
             for ticker in tickers:
                 self.unsubscribe(websocket, ticker)
             del self.connection_subscriptions[websocket]
+            logger.info(f"WebSocket connection closed (was subscribed to {len(tickers)} tickers)")
     
     def subscribe(self, websocket: WebSocket, ticker: str):
         """Subscribe a connection to a ticker symbol."""
@@ -100,6 +105,7 @@ class ConnectionManager:
                         await self.broadcast_price_update(ticker, price)
                     except Exception as e:
                         # If price fetch fails, send error to subscribers
+                        logger.error(f"Failed to fetch price for {ticker}: {str(e)}", exc_info=True)
                         error_message = json.dumps({
                             "type": "error",
                             "ticker": ticker,
@@ -115,7 +121,7 @@ class ConnectionManager:
                 await asyncio.sleep(5)
             except Exception as e:
                 # Log error and continue
-                print(f"Error in price broadcast loop: {e}")
+                logger.error(f"Error in price broadcast loop: {str(e)}", exc_info=True)
                 await asyncio.sleep(5)
     
     def start_broadcast_task(self):

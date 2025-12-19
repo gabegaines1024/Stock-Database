@@ -2,12 +2,16 @@ from datetime import datetime
 from fastapi import HTTPException
 from collections.abc import Iterable
 from typing import Optional, List
+import logging
 
 from sqlalchemy.orm import Session
 
 from app.models import User, Stock, Portfolio, Transaction
 from app.schemas import StockCreate, StockUpdate, PortfolioCreate, PortfolioUpdate, TransactionCreate, TransactionUpdate, UserCreate, UserUpdate
 from app.security import hash_password
+from app.exceptions import NotFoundError, ConflictError, DatabaseError
+
+logger = logging.getLogger(__name__)
 
 
 def create_stock(db: Session, stock: StockCreate) -> Stock:
@@ -242,6 +246,20 @@ def delete_transaction(db: Session, transaction_id: int, user_id: int) -> None:
 
 def create_user(db: Session, user: UserCreate) -> User:
     """Create a new user record with hashed password."""
+    logger.info(f"Creating user: {user.username}")
+    
+    # Check for duplicate username
+    existing_user = db.query(User).filter(User.username == user.username).first()
+    if existing_user:
+        logger.warning(f"Attempt to create user with duplicate username: {user.username}")
+        raise ConflictError("Username already registered", "USERNAME_EXISTS")
+    
+    # Check for duplicate email
+    existing_email = db.query(User).filter(User.email == user.email).first()
+    if existing_email:
+        logger.warning(f"Attempt to create user with duplicate email: {user.email}")
+        raise ConflictError("Email already registered", "EMAIL_EXISTS")
+    
     # Hash the password before storing
     hashed_password_str = hash_password(user.password)
     
@@ -256,10 +274,12 @@ def create_user(db: Session, user: UserCreate) -> User:
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
+        logger.info(f"User created successfully: {user.username} (ID: {db_user.id})")
         return db_user
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Error creating user {user.username}: {str(e)}", exc_info=True)
+        raise DatabaseError(f"Failed to create user: {str(e)}")
 
 
 def get_user(db: Session, username: str) -> User:

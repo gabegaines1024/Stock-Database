@@ -1,12 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import logging
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.model import User
 from app.schemas import TransactionBase, Transaction, TransactionUpdate, TransactionCreate
 from app.crud import create_transaction, get_transaction, update_transaction, delete_transaction, list_transactions
 from app.services.transaction_service import get_current_position
+from app.exceptions import BusinessLogicError
 from typing import List, cast
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -17,6 +21,10 @@ def create_transaction_route(
     current_user: User = Depends(get_current_user)
 ) -> Transaction:
     """Create a new transaction (portfolio must belong to authenticated user)."""
+    logger.info(
+        f"Creating {transaction.transaction_type} transaction: "
+        f"{transaction.quantity} shares of {transaction.ticker_symbol} at ${transaction.price}"
+    )
     try:
         # If transaction type is SELL, check if sufficient holdings exist
         if transaction.transaction_type.lower() == "sell":
@@ -27,9 +35,14 @@ def create_transaction_route(
             )
             
             if transaction.quantity > current_position:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Insufficient holdings for this sell transaction."
+                logger.warning(
+                    f"Insufficient holdings: trying to sell {transaction.quantity} "
+                    f"but only {current_position} available for {transaction.ticker_symbol}"
+                )
+                raise BusinessLogicError(
+                    f"Insufficient holdings. You have {current_position} shares, "
+                    f"but trying to sell {transaction.quantity}.",
+                    "INSUFFICIENT_HOLDINGS"
                 )
         
         transaction_create = TransactionCreate(**transaction.model_dump())

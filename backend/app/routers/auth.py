@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import cast
+import logging
 from slowapi import Limiter  # type: ignore
 from slowapi.util import get_remote_address  # type: ignore
 from app.database import get_db
@@ -11,6 +12,9 @@ from app.models.model import User as UserModel
 from app.security import authenticate_user, create_access_token
 from app.crud import create_user
 from app.dependencies import get_current_user
+from app.exceptions import UnauthorizedError, ConflictError
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 limiter = Limiter(key_func=get_remote_address)
@@ -22,31 +26,22 @@ def register_user(
     db: Session = Depends(get_db)
 ) -> User:
     """Register a new user."""
-    # Check if username already exists
-    existing_user = db.query(UserModel).filter(UserModel.username == user_data.username).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered"
-        )
-    
-    # Check if email already exists
-    existing_email = db.query(UserModel).filter(UserModel.email == user_data.email).first()
-    if existing_email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
+    logger.info(f"Registration attempt for username: {user_data.username}")
     
     try:
         new_user = create_user(db, user_data)
+        logger.info(f"User registered successfully: {user_data.username} (ID: {new_user.id})")
         # FastAPI will automatically convert SQLAlchemy model to Pydantic schema
         # using from_attributes=True, but we cast for type checking
         return cast(User, new_user)
+    except ConflictError:
+        # Re-raise conflict errors (already logged in create_user)
+        raise
     except Exception as e:
+        logger.error(f"Unexpected error during registration for {user_data.username}: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            detail=f"Registration failed: {str(e)}"
         )
 
 
@@ -58,13 +53,12 @@ def login_for_access_token(
     db: Session = Depends(get_db)
 ) -> Token:
     """Authenticate user and return access token (rate limited to prevent brute force attacks)."""
+    logger.info(f"Login attempt for username: {form_data.username}")
+    
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        logger.warning(f"Failed login attempt for username: {form_data.username}")
+        raise UnauthorizedError("Incorrect username or password", "INVALID_CREDENTIALS")
     
     # Create access token with user ID
     access_token_expires = timedelta(minutes=30)
@@ -72,6 +66,7 @@ def login_for_access_token(
         data={"sub": str(user.id)},
         expires_delta=access_token_expires
     )
+    logger.info(f"User logged in successfully: {form_data.username} (ID: {user.id})")
     return Token(access_token=access_token, token_type="bearer")
 
 
