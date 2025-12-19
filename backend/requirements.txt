@@ -10,6 +10,9 @@ python-multipart==0.0.20
 # Database ORM
 sqlalchemy>=2.0.44
 
+# PostgreSQL driver (for production)
+psycopg2-binary==2.9.9
+
 # Database migrations
 alembic==1.12.1
 

@@ -77,11 +77,21 @@ app.add_exception_handler(StarletteHTTPException, http_exception_handler)  # typ
 app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore
 app.add_exception_handler(Exception, general_exception_handler)  # type: ignore
 
-# Add CORS middleware - restrict to frontend URL for security
+# Add CORS middleware
 # In production, only allow requests from the configured frontend URL
+# In development, also allow localhost
+allowed_origins = [settings.frontend_url]
+if not settings.is_production:
+    allowed_origins.extend([
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
