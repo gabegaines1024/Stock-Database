@@ -2,10 +2,12 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(26, 26, 46, 0.8);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 15, 30, 0.6);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   padding: var(--spacing-md) 0;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
 }
 
 .header-container {
@@ -24,8 +26,9 @@
   text-decoration: none;
   color: var(--storm-white);
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   transition: transform var(--transition-base);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .header-logo:hover {
@@ -34,14 +37,15 @@
 
 .logo-icon {
   font-size: 2rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
 }
 
 .logo-text {
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-teal));
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .header-nav {
@@ -51,13 +55,14 @@
 }
 
 .nav-link {
-  color: var(--storm-cloud);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   font-weight: 500;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   transition: all var(--transition-base);
   position: relative;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .nav-link::after {
@@ -67,14 +72,15 @@
   left: 50%;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--accent-blue), var(--accent-teal));
+  background: linear-gradient(90deg, #4facfe, #00f2fe);
   transform: translateX(-50%);
   transition: width var(--transition-base);
+  box-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
 }
 
 .nav-link:hover {
   color: var(--storm-white);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-link.active {
@@ -95,6 +101,7 @@
   color: var(--storm-white);
   font-weight: 500;
   font-size: 0.9rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 @media (max-width: 768px) {
@@ -114,4 +121,3 @@
     padding: var(--spacing-xs) var(--spacing-sm);
   }
 }
-

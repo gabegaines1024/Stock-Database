@@ -67,7 +67,8 @@ html {
 
 body {
   font-family: var(--font-primary);
-  background: linear-gradient(135deg, var(--storm-dark) 0%, var(--storm-deep) 50%, var(--storm-blue) 100%);
+  background: url('/background.jpg') no-repeat center center fixed;
+  background-size: cover;
   color: var(--storm-pearl);
   line-height: 1.6;
   min-height: 100vh;
@@ -76,8 +77,15 @@ body {
   padding: 0;
 }
 
+/* Light overlay - lets background show through */
 #root {
   min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 10, 20, 0.55) 0%,
+    rgba(15, 25, 45, 0.45) 50%,
+    rgba(10, 30, 60, 0.40) 100%
+  );
 }
 
 /* Typography */
@@ -85,10 +93,12 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.02em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 h1 {
   font-size: clamp(2rem, 5vw, 3.5rem);
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
 h2 {
@@ -97,6 +107,11 @@ h2 {
 
 h3 {
   font-size: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+/* Enhanced text readability over background */
+p, span, div, label {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Scrollbar Styling */

@@ -10,17 +10,19 @@
 
 .dashboard-hero h1 {
   margin-bottom: var(--spacing-md);
-  background: linear-gradient(135deg, var(--storm-white), var(--storm-cloud));
+  background: linear-gradient(135deg, #ffffff 0%, #4facfe 50%, #00f2fe 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
 }
 
 .hero-subtitle {
   font-size: 1.25rem;
-  color: var(--storm-cloud);
+  color: rgba(255, 255, 255, 0.9);
   max-width: 600px;
   margin: 0 auto;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .dashboard-stats {
@@ -46,16 +48,18 @@
   font-weight: 700;
   color: var(--storm-white);
   margin-bottom: var(--spacing-xs);
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-teal));
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .stat-label {
   font-size: 1rem;
-  color: var(--storm-cloud);
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: var(--spacing-lg);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .stat-link {

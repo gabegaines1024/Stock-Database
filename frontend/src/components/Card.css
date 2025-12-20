@@ -1,11 +1,14 @@
 .card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 20, 35, 0.65);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   transition: all var(--transition-base);
-  box-shadow: var(--shadow-md);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .card-hover {
@@ -14,15 +17,17 @@
 
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(15, 20, 35, 0.75);
 }
 
 .card-header {
   margin-bottom: var(--spacing-lg);
   padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .card-title {
@@ -30,20 +35,22 @@
   font-weight: 600;
   margin-bottom: var(--spacing-xs);
   color: var(--storm-white);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .card-subtitle {
   font-size: 0.875rem;
-  color: var(--storm-cloud);
+  color: var(--storm-silver);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .card-body {
   color: var(--storm-pearl);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .card-footer {
   margin-top: var(--spacing-lg);
   padding-top: var(--spacing-md);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
-
