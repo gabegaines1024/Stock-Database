@@ -47,7 +47,7 @@ export const Register: React.FC = () => {
         <Card className="register-card">
           <div className="register-header">
             <h1>Create Account</h1>
-            <p>Sign up for StockTracker</p>
+            <p>Sign up for G.G. Trading</p>
           </div>
 
           {error && (

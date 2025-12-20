@@ -86,7 +86,7 @@ export const Dashboard: React.FC = () => {
     <div className="dashboard">
       <div className="container">
         <div className="dashboard-hero slide-up">
-          <h1>Welcome to StockTracker</h1>
+          <h1>Welcome to G.G. Trading</h1>
           <p className="hero-subtitle">
             Manage your portfolios, track stocks, and monitor your investments
           </p>

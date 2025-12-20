@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers deploying your Stock Database app with:
+This guide covers deploying **G.G. Trading** with:
 - **Frontend**: Vercel (free tier)
 - **Backend**: Railway (free tier with limitations) or Render
 

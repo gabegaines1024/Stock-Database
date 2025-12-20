@@ -25,8 +25,8 @@ export const Header: React.FC = () => {
     <header className="header">
       <div className="header-container">
         <Link to="/" className="header-logo">
-          <span className="logo-icon">📈</span>
-          <span className="logo-text">StockTracker</span>
+          <span className="logo-icon">💹</span>
+          <span className="logo-text">G.G. Trading</span>
         </Link>
         
         {isAuthenticated && (

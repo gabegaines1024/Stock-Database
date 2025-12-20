@@ -34,7 +34,7 @@ export const Login: React.FC = () => {
         <Card className="login-card">
           <div className="login-header">
             <h1>Welcome Back</h1>
-            <p>Sign in to your StockTracker account</p>
+            <p>Sign in to your G.G. Trading account</p>
           </div>
 
           {error && (
